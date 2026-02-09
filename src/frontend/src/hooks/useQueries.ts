@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
+import { useInternetIdentity } from './useInternetIdentity';
+import { useOnlineStatus } from './useOnlineStatus';
+import { useOfflinePreference } from '../offline/useOfflinePreference';
+import { OfflineQueue } from '../offline/offlineQueue';
+import { writeOfflineData, readOfflineData } from '../offline/offlineStorage';
 import type { UserProfile, UserData, HydrationLog, SleepLog, RunningLog, CustomReminderDefinition, UserRewards } from '../backend';
 
 export function useGetCallerUserProfile() {
@@ -52,14 +57,30 @@ export function useGetUserSettings() {
 
 export function useUpdateUserSettings() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ dailyGoal, cupSize }: { dailyGoal: number; cupSize: number }) => {
       if (!actor) throw new Error('Actor not available');
+      
+      // If offline and offline mode enabled, queue the action
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const queue = new OfflineQueue(principal);
+        queue.enqueue('updateUserSettings', { dailyGoal, cupSize });
+        return { queued: true };
+      }
+      
       return actor.updateUserSettings(dailyGoal, cupSize);
     },
-    onSuccess: () => {
+    onSuccess: (result: any) => {
+      if (result?.queued) {
+        // Don't invalidate queries when queued
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ['userSettings'] });
     },
   });
@@ -67,12 +88,33 @@ export function useUpdateUserSettings() {
 
 export function useGetTodaysIntake() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
 
   return useQuery<number>({
     queryKey: ['todaysIntake'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getTodaysIntake();
+      
+      // If offline and offline mode enabled, return cached data
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const cached = readOfflineData<number>(principal, 'todaysIntake');
+        if (cached) {
+          return cached.data;
+        }
+      }
+      
+      const data = await actor.getTodaysIntake();
+      
+      // Cache successful online fetch
+      if (isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        writeOfflineData(principal, 'todaysIntake', data);
+      }
+      
+      return data;
     },
     enabled: !!actor && !actorFetching,
     refetchInterval: 30000,
@@ -81,14 +123,31 @@ export function useGetTodaysIntake() {
 
 export function useAddDailyIntake() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (amount: number) => {
       if (!actor) throw new Error('Actor not available');
+      
+      // If offline and offline mode enabled, queue the action
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const queue = new OfflineQueue(principal);
+        queue.enqueue('addDailyIntake', { amount });
+        return { queued: true };
+      }
+      
       return actor.addDailyIntake(amount);
     },
-    onSuccess: async () => {
+    onSuccess: async (result: any) => {
+      if (result?.queued) {
+        // Don't invalidate queries when queued
+        return;
+      }
+      
       // Invalidate and refetch to get updated rewards state
       await queryClient.invalidateQueries({ queryKey: ['todaysIntake'] });
       await queryClient.invalidateQueries({ queryKey: ['intakeHistory'] });
@@ -99,12 +158,33 @@ export function useAddDailyIntake() {
 
 export function useGetIntakeHistory() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
 
   return useQuery<HydrationLog[]>({
     queryKey: ['intakeHistory'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getIntakeHistory();
+      
+      // If offline and offline mode enabled, return cached data
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const cached = readOfflineData<HydrationLog[]>(principal, 'intakeHistory');
+        if (cached) {
+          return cached.data;
+        }
+      }
+      
+      const data = await actor.getIntakeHistory();
+      
+      // Cache successful online fetch
+      if (isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        writeOfflineData(principal, 'intakeHistory', data);
+      }
+      
+      return data;
     },
     enabled: !!actor && !actorFetching,
   });
@@ -127,12 +207,33 @@ export function useGetUserRewards() {
 // Sleep tracking hooks
 export function useGetTodaysSleep() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
 
   return useQuery<number>({
     queryKey: ['todaysSleep'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getTodaysSleep();
+      
+      // If offline and offline mode enabled, return cached data
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const cached = readOfflineData<number>(principal, 'todaysSleep');
+        if (cached) {
+          return cached.data;
+        }
+      }
+      
+      const data = await actor.getTodaysSleep();
+      
+      // Cache successful online fetch
+      if (isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        writeOfflineData(principal, 'todaysSleep', data);
+      }
+      
+      return data;
     },
     enabled: !!actor && !actorFetching,
     refetchInterval: 30000,
@@ -141,14 +242,31 @@ export function useGetTodaysSleep() {
 
 export function useAddSleepLog() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (hours: number) => {
       if (!actor) throw new Error('Actor not available');
+      
+      // If offline and offline mode enabled, queue the action
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const queue = new OfflineQueue(principal);
+        queue.enqueue('addSleepLog', { hours });
+        return { queued: true };
+      }
+      
       return actor.addSleepLog(hours);
     },
-    onSuccess: () => {
+    onSuccess: (result: any) => {
+      if (result?.queued) {
+        // Don't invalidate queries when queued
+        return;
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['todaysSleep'] });
       queryClient.invalidateQueries({ queryKey: ['sleepHistory'] });
     },
@@ -157,12 +275,33 @@ export function useAddSleepLog() {
 
 export function useGetSleepHistory() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
 
   return useQuery<SleepLog[]>({
     queryKey: ['sleepHistory'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getSleepHistory();
+      
+      // If offline and offline mode enabled, return cached data
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const cached = readOfflineData<SleepLog[]>(principal, 'sleepHistory');
+        if (cached) {
+          return cached.data;
+        }
+      }
+      
+      const data = await actor.getSleepHistory();
+      
+      // Cache successful online fetch
+      if (isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        writeOfflineData(principal, 'sleepHistory', data);
+      }
+      
+      return data;
     },
     enabled: !!actor && !actorFetching,
   });
@@ -171,14 +310,31 @@ export function useGetSleepHistory() {
 // Running tracking hooks
 export function useLogRun() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ distance, time, pace, completed }: { distance: number; time: bigint; pace: number; completed: boolean }) => {
       if (!actor) throw new Error('Actor not available');
+      
+      // If offline and offline mode enabled, queue the action
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const queue = new OfflineQueue(principal);
+        queue.enqueue('logRun', { distance, time: time.toString(), pace, completed });
+        return { queued: true };
+      }
+      
       return actor.logRun(distance, time, pace, completed);
     },
-    onSuccess: () => {
+    onSuccess: (result: any) => {
+      if (result?.queued) {
+        // Don't invalidate queries when queued
+        return;
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['runningHistory'] });
       queryClient.invalidateQueries({ queryKey: ['todaysRuns'] });
     },
@@ -187,12 +343,33 @@ export function useLogRun() {
 
 export function useGetRunningHistory() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
 
   return useQuery<RunningLog[]>({
     queryKey: ['runningHistory'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getRunningHistory();
+      
+      // If offline and offline mode enabled, return cached data
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const cached = readOfflineData<RunningLog[]>(principal, 'runningHistory');
+        if (cached) {
+          return cached.data;
+        }
+      }
+      
+      const data = await actor.getRunningHistory();
+      
+      // Cache successful online fetch
+      if (isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        writeOfflineData(principal, 'runningHistory', data);
+      }
+      
+      return data;
     },
     enabled: !!actor && !actorFetching,
   });
@@ -269,4 +446,22 @@ export function useRemoveCustomReminder() {
       queryClient.invalidateQueries({ queryKey: ['customReminders'] });
     },
   });
+}
+
+// Helper to check if data is from offline cache
+export function useIsOfflineData(queryKey: string[]): { isOfflineData: boolean; cachedAt?: number } {
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
+
+  if (!isOnline && offlineEnabled && identity) {
+    const principal = identity.getPrincipal().toString();
+    const key = queryKey[0];
+    const cached = readOfflineData(principal, key);
+    if (cached) {
+      return { isOfflineData: true, cachedAt: cached.timestamp };
+    }
+  }
+
+  return { isOfflineData: false };
 }

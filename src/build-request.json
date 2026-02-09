@@ -1,96 +1,89 @@
 {
   "kind": "build_request",
-  "title": "Add streak-break reminder (streak at risk) with accurate streak tracking",
+  "title": "Add offline saved content mode (queue + cache user data for offline use)",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-25",
-      "text": "Update backend hydration streak logic so the stored streak represents consecutive days where the user met their daily hydration goal, and automatically resets when a day is missed.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Add streak break"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When a user meets their daily goal on consecutive days, the streak increments by 1 per day.",
-        "If the user misses a day (gap of 2+ days since the last goal-met day), the streak resets to 0 (or restarts at 1 on the next goal-met day).",
-        "Meeting the goal multiple times in the same calendar day does not increment the streak more than once for that day.",
-        "getUserRewards returns a streak value that is consistent with the consecutive-days rule (including after time has passed without new writes)."
-      ]
-    },
-    {
-      "id": "REQ-26",
-      "text": "Add a conditional Motoko state migration (backend/migration.mo) to safely upgrade existing stored user rewards to the updated streak data structure used by the new consecutive-day streak logic.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Add streak break"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Project upgrades without trapping due to missing/new fields in persisted rewards data.",
-        "Existing users keep their current streak count (or it is deterministically normalized using the new logic) after upgrade."
-      ]
-    },
-    {
-      "id": "REQ-27",
-      "text": "Implement a new local streak-break reminder that notifies the user when their current hydration streak is at risk of breaking (streak > 0 and today’s goal is not yet met, near end-of-day). Use browser notifications when permitted; otherwise show the existing in-app reminder banner.",
+      "id": "REQ-34",
+      "text": "Add offline-first persistence for user-generated tracking actions so users can continue using the app while offline: when the device is offline, queue hydration intake logs, sleep logs, running logs, and settings updates locally and automatically sync them to the backend when connectivity is restored.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-3"
         ],
         "quotes": [
-          "Add streak break"
+          "Yes save"
         ]
       },
       "acceptanceCriteria": [
-        "When streak > 0 and today’s hydration goal is not yet met, a streak-break reminder can fire during a configurable “warning window” near the end of the user’s local day.",
-        "The reminder uses the browser Notification API if permission is granted; otherwise it appears in the existing InAppReminderBanner UI.",
-        "The reminder content is English, chill/encouraging, and not aggressive or shaming.",
-        "The streak-break reminder does not spam: at most once per local calendar day (per user/device) unless the user dismisses and re-enables it explicitly."
+        "When the browser is offline, submitting any of the following actions does not error and instead saves locally: addDailyIntake, addSleepLog, logRun, updateUserSettings.",
+        "Queued offline actions are persisted across page reloads (e.g., via localStorage) until successfully synced.",
+        "When the browser returns online, queued actions are replayed automatically in the original order and removed from the queue only after backend success.",
+        "If a queued action fails to sync (backend error), the UI surfaces a non-blocking English message explaining sync failed and keeps the item queued for a later retry.",
+        "After sync completes, relevant React Query caches are refreshed so Today/History/Rewards reflect server state."
       ]
     },
     {
-      "id": "REQ-28",
-      "text": "Expose user controls in the existing Reminders UI to enable/disable the streak-break reminder and configure the warning window timing (e.g., number of hours before day end). Persist these preferences locally (device) using localStorage.",
+      "id": "REQ-35",
+      "text": "Cache the last successfully fetched user data locally so the app can display meaningful read-only content while offline, including today’s totals and recent history for hydration, sleep, and running.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-3"
         ],
         "quotes": [
-          "Add streak break"
+          "Yes save"
         ]
       },
       "acceptanceCriteria": [
-        "A user can toggle the streak-break reminder on/off from the Reminders tab.",
-        "A user can adjust the warning window timing (hours before end of day) and the app uses that setting immediately.",
-        "Settings persist across reloads on the same device via localStorage.",
-        "All user-facing labels/help text are in English."
+        "When online, successful fetches for today’s values and history lists store a copy locally (per signed-in principal).",
+        "When offline, the app displays the last cached values for today’s progress and history views (hydration/sleep/running) instead of showing only loading/errors.",
+        "The UI clearly indicates the data may be stale while offline using English copy (e.g., “Showing saved data from your last connection.”).",
+        "Offline read-only rendering does not require any backend calls and does not crash if no cached data exists (falls back to existing empty/loading states)."
+      ]
+    },
+    {
+      "id": "REQ-36",
+      "text": "Expose a simple in-app control to enable/disable “Save for offline use” behavior on the device, and provide English helper text describing what is saved and that sync happens when back online.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "Yes save"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A toggle labeled in English (e.g., “Save for offline use”) is available in an existing settings surface.",
+        "When disabled, the app does not queue new offline actions and does not write new offline caches (existing queued items/caches may be left intact unless the user explicitly clears them).",
+        "When enabled, behavior matches REQ-34 and REQ-35.",
+        "User preference is persisted locally on the device and restored on reload."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
-    "Generate backend/migration.mo only as needed for upgrading existing stable state (conditional migration).",
-    "Do not modify files under frontend/src/components/ui or any other frontend immutablePaths; compose existing UI components instead.",
-    "Use English for any user-facing text."
+    "Do not modify files under frontend/src/components/ui (shadcn components are read-only).",
+    "Do not modify frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (immutable paths).",
+    "Keep all user-facing text in English."
   ],
   "nonGoals": [
-    "Do not add push notifications, background OS scheduling, WebSockets, or any server-side cron/scheduler.",
-    "Do not introduce third-party authentication providers beyond Internet Identity.",
-    "Do not add external databases or off-canister storage/services."
+    "Implementing real-time sync or WebSocket-based updates.",
+    "Providing cross-device offline queue synchronization (offline data is device-local only).",
+    "Adding a new backend storage layer or changing Motoko canister state specifically for offline support."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

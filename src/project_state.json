@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 13,
-  "summary": "Expand the health reminders/tracking app with owner-only admin analytics (usage dashboard) and a Gen-Z styled, gamified experience with rewards and more engaging/chill notifications.",
+  "projectStateVersion": 17,
+  "summary": "Expand the health reminders/tracking app with owner-only admin analytics (usage dashboard), a Gen-Z styled gamified experience, and a downloadable build users can install (packaged as a distributable app).",
   "architectural_notes": [
     "Restrict analytics/usage endpoints to the canister owner (owner Principal) so only the app owner can access global usage data; regular users remain limited to their own data.",
     "Hide/disable Admin Dashboard UI for non-owner callers in the frontend in addition to backend authorization.",
@@ -180,6 +180,70 @@
         "REQ-28"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-make-the-web-app-installable-as-a-progressive-web-app-pwa-by-adding-a-web-app-manifest-required-meta-tags-and-icon-assets-so-users-can-install-it-to-their-device-home-screen-desktop-and-mobile-via-the-browser-install-flow",
+      "title": "Make the web app installable as a Progressive Web App (PWA) by adding a web app manifest, required meta tags, and icon assets so users can install it to their device home screen (desktop and mobile) via the browser install flow.",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-service-worker-to-enable-basic-offline-support-for-the-installed-pwa-including-caching-of-the-app-shell-built-js-css-and-static-assets-and-a-safe-fallback-behavior-when-the-network-is-unavailable",
+      "title": "Add a service worker to enable basic offline support for the installed PWA, including caching of the app shell (built JS/CSS and static assets) and a safe fallback behavior when the network is unavailable.",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-expose-a-simple-in-app-install-affordance-that-helps-users-install-the-app-when-the-browser-supports-installation-using-english-user-facing-copy",
+      "title": "Expose a simple in-app install affordance that helps users install the app when the browser supports installation, using English user-facing copy.",
+      "reqIds": [
+        "REQ-31"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-brief-developer-facing-documentation-explaining-how-users-can-install-the-app-desktop-chrome-edge-android-ios-safari-guidance-and-how-to-verify-pwa-service-worker-behavior-locally",
+      "title": "Add brief developer-facing documentation explaining how users can install the app (desktop Chrome/Edge + Android + iOS Safari guidance) and how to verify PWA/service-worker behavior locally.",
+      "reqIds": [
+        "REQ-32"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-render-the-newly-generated-pwa-icon-assets-as-static-files-served-from-the-frontend-build-output-do-not-route-image-generation-or-serving-through-the-backend",
+      "title": "Render the newly generated PWA icon assets as static files served from the frontend build output (do not route image generation or serving through the backend).",
+      "reqIds": [
+        "REQ-33"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-offline-first-persistence-for-user-generated-tracking-actions-so-users-can-continue-using-the-app-while-offline-when-the-device-is-offline-queue-hydration-intake-logs-sleep-logs-running-logs-and-settings-updates-locally-and-automatically-sync-them-to-the-backend-when-connectivity-is-restored",
+      "title": "Add offline-first persistence for user-generated tracking actions so users can continue using the app while offline: when the device is offline, queue hydration intake logs, sleep logs, running logs, and settings updates locally and automatically sync them to the backend when connectivity is restored.",
+      "reqIds": [
+        "REQ-34"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-cache-the-last-successfully-fetched-user-data-locally-so-the-app-can-display-meaningful-read-only-content-while-offline-including-today-s-totals-and-recent-history-for-hydration-sleep-and-running",
+      "title": "Cache the last successfully fetched user data locally so the app can display meaningful read-only content while offline, including today’s totals and recent history for hydration, sleep, and running.",
+      "reqIds": [
+        "REQ-35"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-expose-a-simple-in-app-control-to-enable-disable-save-for-offline-use-behavior-on-the-device-and-provide-english-helper-text-describing-what-is-saved-and-that-sync-happens-when-back-online",
+      "title": "Expose a simple in-app control to enable/disable “Save for offline use” behavior on the device, and provide English helper text describing what is saved and that sync happens when back online.",
+      "reqIds": [
+        "REQ-36"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -315,6 +379,18 @@
       "reqIds": [
         "REQ-26"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-23",
+      "summary": "Provide a downloadable version of the app that users can install (e.g., packaged distribution such as PWA install flow or platform builds).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Add an option for users to save/use app content offline (offline support via caching/service worker).",
+      "reqIds": [],
       "status": "pending"
     }
   ],

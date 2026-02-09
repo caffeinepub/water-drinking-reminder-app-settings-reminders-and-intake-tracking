@@ -1,8 +1,45 @@
+<!DOCTYPE html>
 <html lang='en'>
     <head>
         <meta charset='UTF-8' />
         <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-        <title>Water Drinking Reminder App (settings, reminders, and intake tracking)</title>
+        <meta name='theme-color' content='#0ea5e9' />
+        <meta name='apple-mobile-web-app-capable' content='yes' />
+        <meta name='apple-mobile-web-app-status-bar-style' content='default' />
+        <meta name='apple-mobile-web-app-title' content='Hydration Tracker' />
+        <meta name='description' content='Track your water, sleep, and runs. Earn badges, build streaks, and keep your body happy.' />
+        
+        <link rel='manifest' href='/manifest.webmanifest' />
+        <link rel='apple-touch-icon' href='/assets/generated/apple-touch-icon.dim_180x180.png' />
+        
+        <title>Hydration Tracker - Stay Hydrated, Stay Vibing</title>
+        
+        <script>
+          // Register service worker
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                  console.log('Service Worker registered:', registration);
+                  
+                  // Handle updates
+                  registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    if (newWorker) {
+                      newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                          console.log('New service worker available, will activate on next refresh');
+                        }
+                      });
+                    }
+                  });
+                })
+                .catch(error => {
+                  console.log('Service Worker registration failed:', error);
+                });
+            });
+          }
+        </script>
     </head>
     <body>
         <div id='root'></div>

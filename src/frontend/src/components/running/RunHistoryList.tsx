@@ -1,10 +1,12 @@
-import { useGetRunningHistory } from '../../hooks/useQueries';
+import { useGetRunningHistory, useIsOfflineData } from '../../hooks/useQueries';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import OfflineStaleNotice from '../offline/OfflineStaleNotice';
 import { History, Activity, Clock, Gauge } from 'lucide-react';
 
 export default function RunHistoryList() {
   const { data: history = [], isLoading } = useGetRunningHistory();
+  const { isOfflineData, cachedAt } = useIsOfflineData(['runningHistory']);
 
   if (isLoading) {
     return (
@@ -18,7 +20,7 @@ export default function RunHistoryList() {
     );
   }
 
-  if (history.length === 0) {
+  if (history.length === 0 && !isOfflineData) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -78,56 +80,68 @@ export default function RunHistoryList() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
-            <div>
-              <p className="text-xs text-muted-foreground">Last 7 Days</p>
-              <p className="text-2xl font-bold">{totalDistance.toFixed(1)} km</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Avg Pace</p>
-              <p className="text-2xl font-bold">{averagePace > 0 ? formatPace(averagePace) : '--'}</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {sortedHistory.map((run, index) => {
-              const date = new Date(Number(run.timestamp) / 1000000);
-              const isToday = date.toDateString() === new Date().toDateString();
-
-              return (
-                <div key={index} className="space-y-2 p-3 border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      </span>
-                      <Badge variant={run.completed ? 'default' : 'secondary'} className="text-xs">
-                        {run.completed ? 'Completed' : 'Incomplete'}
-                      </Badge>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Activity className="w-3 h-3 text-muted-foreground" />
-                      <span className="font-medium">{run.distance.toFixed(1)} km</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-muted-foreground" />
-                      <span>{formatTime(run.time)}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Gauge className="w-3 h-3 text-muted-foreground" />
-                      <span>{formatPace(run.pace)}</span>
-                    </div>
-                  </div>
+          {isOfflineData && <OfflineStaleNotice cachedAt={cachedAt} />}
+          
+          {history.length > 0 && (
+            <>
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+                <div>
+                  <p className="text-xs text-muted-foreground">Last 7 Days</p>
+                  <p className="text-2xl font-bold">{totalDistance.toFixed(1)} km</p>
                 </div>
-              );
-            })}
-          </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Avg Pace</p>
+                  <p className="text-2xl font-bold">{averagePace > 0 ? formatPace(averagePace) : '--'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {sortedHistory.map((run, index) => {
+                  const date = new Date(Number(run.timestamp) / 1000000);
+                  const isToday = date.toDateString() === new Date().toDateString();
+
+                  return (
+                    <div key={index} className="space-y-2 p-3 border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            {isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                          </span>
+                          <Badge variant={run.completed ? 'default' : 'secondary'} className="text-xs">
+                            {run.completed ? 'Completed' : 'Incomplete'}
+                          </Badge>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Activity className="w-3 h-3 text-muted-foreground" />
+                          <span className="font-medium">{run.distance.toFixed(1)} km</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-muted-foreground" />
+                          <span>{formatTime(run.time)}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Gauge className="w-3 h-3 text-muted-foreground" />
+                          <span>{formatPace(run.pace)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {history.length === 0 && isOfflineData && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No cached running history available</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

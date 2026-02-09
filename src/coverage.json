@@ -1,80 +1,102 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T06:40:57.495Z",
+  "generatedAt": "2026-02-09T07:55:37.237Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-25",
-        "summary": "Update backend hydration streak logic so the stored streak represents consecutive days where the user met their daily hydration goal, and automatically resets when a day is missed.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-26",
-        "summary": "Add a conditional Motoko state migration (backend/migration.mo) to safely upgrade existing stored user rewards to the updated streak data structure used by the new consecutive-day streak logic.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-27",
-        "summary": "Implement a new local streak-break reminder that notifies the user when their current hydration streak is at risk of breaking (streak > 0 and today’s goal is not yet met, near end-of-day). Use browser notifications when permitted; otherwise show the existing in-app reminder banner.",
+        "id": "REQ-34",
+        "summary": "Add offline-first persistence for user-generated tracking actions so users can continue using the app while offline: when the device is offline, queue hydration intake logs, sleep logs, running logs, and settings updates locally and automatically sync them to the backend when connectivity is restored.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useReminderSchedulerContext.tsx",
-          "frontend/src/components/reminders/InAppReminderBanner.tsx",
-          "frontend/src/hooks/useStreakBreakReminder.ts",
-          "frontend/src/components/reminders/StreakBreakReminderController.tsx",
+          "frontend/src/offline/offlineQueue.ts",
+          "frontend/src/offline/offlineStorage.ts",
+          "frontend/src/offline/OfflineSyncProvider.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/intake/QuickAddIntake.tsx",
+          "frontend/src/components/sleep/SleepLogForm.tsx",
+          "frontend/src/components/running/RunLogForm.tsx",
+          "frontend/src/components/settings/SettingsForm.tsx",
           "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useReminderSchedulerContext.tsx",
-          "frontend/src/components/reminders/InAppReminderBanner.tsx",
-          "frontend/src/hooks/useStreakBreakReminder.ts",
-          "frontend/src/components/reminders/StreakBreakReminderController.tsx",
+          "frontend/src/offline/offlineQueue.ts",
+          "frontend/src/offline/offlineStorage.ts",
+          "frontend/src/offline/OfflineSyncProvider.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/intake/QuickAddIntake.tsx",
+          "frontend/src/components/sleep/SleepLogForm.tsx",
+          "frontend/src/components/running/RunLogForm.tsx",
+          "frontend/src/components/settings/SettingsForm.tsx",
           "frontend/src/App.tsx"
         ]
       },
       {
-        "id": "REQ-28",
-        "summary": "Expose user controls in the existing Reminders UI to enable/disable the streak-break reminder and configure the warning window timing (e.g., number of hours before day end). Persist these preferences locally (device) using localStorage.",
+        "id": "REQ-35",
+        "summary": "Cache the last successfully fetched user data locally so the app can display meaningful read-only content while offline, including today’s totals and recent history for hydration, sleep, and running.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/reminders/ReminderControls.tsx",
-          "frontend/src/hooks/useStreakBreakReminder.ts"
+          "frontend/src/components/offline/OfflineStaleNotice.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/intake/TodayProgress.tsx",
+          "frontend/src/components/history/HistoryView.tsx",
+          "frontend/src/components/sleep/SleepHistoryList.tsx",
+          "frontend/src/components/running/RunHistoryList.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/reminders/ReminderControls.tsx",
-          "frontend/src/hooks/useStreakBreakReminder.ts"
+          "frontend/src/components/offline/OfflineStaleNotice.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/intake/TodayProgress.tsx",
+          "frontend/src/components/history/HistoryView.tsx",
+          "frontend/src/components/sleep/SleepHistoryList.tsx",
+          "frontend/src/components/running/RunHistoryList.tsx"
+        ]
+      },
+      {
+        "id": "REQ-36",
+        "summary": "Expose a simple in-app control to enable/disable “Save for offline use” behavior on the device, and provide English helper text describing what is saved and that sync happens when back online.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/offline/useOfflinePreference.ts",
+          "frontend/src/components/settings/SettingsForm.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/offline/OfflineSyncProvider.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/offline/useOfflinePreference.ts",
+          "frontend/src/components/settings/SettingsForm.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/offline/OfflineSyncProvider.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/reminders/InAppReminderBanner.tsx",
-    "frontend/src/components/reminders/ReminderControls.tsx",
-    "frontend/src/components/reminders/StreakBreakReminderController.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useReminderSchedulerContext.tsx",
-    "frontend/src/hooks/useStreakBreakReminder.ts",
+    "frontend/src/components/history/HistoryView.tsx",
+    "frontend/src/components/intake/QuickAddIntake.tsx",
+    "frontend/src/components/intake/TodayProgress.tsx",
+    "frontend/src/components/offline/OfflineStaleNotice.tsx",
+    "frontend/src/components/running/RunHistoryList.tsx",
+    "frontend/src/components/running/RunLogForm.tsx",
+    "frontend/src/components/settings/SettingsForm.tsx",
+    "frontend/src/components/sleep/SleepHistoryList.tsx",
+    "frontend/src/components/sleep/SleepLogForm.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/offline/OfflineSyncProvider.tsx",
+    "frontend/src/offline/offlineQueue.ts",
+    "frontend/src/offline/offlineStorage.ts",
+    "frontend/src/offline/useOfflinePreference.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -3,11 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAddSleepLog } from '../../hooks/useQueries';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { toast } from 'sonner';
 import { Moon } from 'lucide-react';
 
 export default function SleepLogForm() {
   const [hours, setHours] = useState('');
+  const isOnline = useOnlineStatus();
   const addSleepLog = useAddSleepLog();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,8 +22,17 @@ export default function SleepLogForm() {
     }
 
     try {
-      await addSleepLog.mutateAsync(hoursNum);
-      toast.success(`Logged ${hoursNum} hours of sleep`);
+      const result = await addSleepLog.mutateAsync(hoursNum);
+      
+      // Check if action was queued for offline
+      if (result?.queued) {
+        toast.success('Saved offline. Will sync when back online.', {
+          description: `Logged ${hoursNum} hours of sleep`,
+        });
+      } else {
+        toast.success(`Logged ${hoursNum} hours of sleep`);
+      }
+      
       setHours('');
     } catch (error) {
       toast.error('Failed to log sleep');

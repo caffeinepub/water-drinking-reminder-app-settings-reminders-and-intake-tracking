@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useLogRun } from '../../hooks/useQueries';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { toast } from 'sonner';
 import { Activity } from 'lucide-react';
 
@@ -12,6 +13,7 @@ export default function RunLogForm() {
   const [minutes, setMinutes] = useState('');
   const [seconds, setSeconds] = useState('');
   const [completed, setCompleted] = useState(true);
+  const isOnline = useOnlineStatus();
   const logRun = useLogRun();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,13 +43,22 @@ export default function RunLogForm() {
     const pace = totalSeconds / 60 / distanceNum;
 
     try {
-      await logRun.mutateAsync({
+      const result = await logRun.mutateAsync({
         distance: distanceNum,
         time: timeNanos,
         pace,
         completed,
       });
-      toast.success(`Logged ${distanceNum} km run`);
+      
+      // Check if action was queued for offline
+      if (result?.queued) {
+        toast.success('Saved offline. Will sync when back online.', {
+          description: `Logged ${distanceNum} km run`,
+        });
+      } else {
+        toast.success(`Logged ${distanceNum} km run`);
+      }
+      
       setDistance('');
       setMinutes('');
       setSeconds('');

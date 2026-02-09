@@ -1,5 +1,6 @@
 import { useGetCallerUserProfile } from '../../hooks/useQueries';
 import LoginButton from '../auth/LoginButton';
+import InstallAppButton from '../pwa/InstallAppButton';
 import { Droplets, Sparkles } from 'lucide-react';
 
 export default function AppHeader() {
@@ -27,7 +28,10 @@ export default function AppHeader() {
               )}
             </div>
           </div>
-          <LoginButton />
+          <div className="flex items-center gap-3">
+            <InstallAppButton />
+            <LoginButton />
+          </div>
         </div>
       </div>
     </header>

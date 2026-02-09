@@ -1,14 +1,16 @@
-import { useGetTodaysIntake, useGetUserSettings, useGetUserRewards } from '../../hooks/useQueries';
+import { useGetTodaysIntake, useGetUserSettings, useGetUserRewards, useIsOfflineData } from '../../hooks/useQueries';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Droplets, TrendingUp, Flame } from 'lucide-react';
 import GoalCelebrationCard from '../rewards/GoalCelebrationCard';
+import OfflineStaleNotice from '../offline/OfflineStaleNotice';
 import { useState, useEffect } from 'react';
 
 export default function TodayProgress() {
   const { data: todaysIntake = 0, isLoading: intakeLoading } = useGetTodaysIntake();
   const { data: settings } = useGetUserSettings();
   const { data: rewards } = useGetUserRewards();
+  const { isOfflineData, cachedAt } = useIsOfflineData(['todaysIntake']);
   const [showCelebration, setShowCelebration] = useState(false);
   const [previousGoalMet, setPreviousGoalMet] = useState(false);
 
@@ -58,6 +60,8 @@ export default function TodayProgress() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isOfflineData && <OfflineStaleNotice cachedAt={cachedAt} />}
+          
           <div className="space-y-3">
             <div className="flex items-end justify-between">
               <div>
