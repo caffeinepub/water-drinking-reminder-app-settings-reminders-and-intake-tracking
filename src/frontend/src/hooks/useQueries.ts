@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile, UserData, HydrationLog } from '../backend';
+import type { UserProfile, UserData, HydrationLog, SleepLog, RunningLog, CustomReminderDefinition } from '../backend';
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -75,7 +75,7 @@ export function useGetTodaysIntake() {
       return actor.getTodaysIntake();
     },
     enabled: !!actor && !actorFetching,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 }
 
@@ -105,5 +105,152 @@ export function useGetIntakeHistory() {
       return actor.getIntakeHistory();
     },
     enabled: !!actor && !actorFetching,
+  });
+}
+
+// Sleep tracking hooks
+export function useGetTodaysSleep() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<number>({
+    queryKey: ['todaysSleep'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getTodaysSleep();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 30000,
+  });
+}
+
+export function useAddSleepLog() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (hours: number) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.addSleepLog(hours);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todaysSleep'] });
+      queryClient.invalidateQueries({ queryKey: ['sleepHistory'] });
+    },
+  });
+}
+
+export function useGetSleepHistory() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<SleepLog[]>({
+    queryKey: ['sleepHistory'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getSleepHistory();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+// Running tracking hooks
+export function useLogRun() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ distance, time, pace, completed }: { distance: number; time: bigint; pace: number; completed: boolean }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.logRun(distance, time, pace, completed);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['runningHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['todaysRuns'] });
+    },
+  });
+}
+
+export function useGetRunningHistory() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<RunningLog[]>({
+    queryKey: ['runningHistory'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getRunningHistory();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useGetTodaysRuns() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<RunningLog[]>({
+    queryKey: ['todaysRuns'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getTodaysRuns();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 30000,
+  });
+}
+
+// Custom reminders hooks
+export function useListCustomReminders() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<CustomReminderDefinition[]>({
+    queryKey: ['customReminders'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.listCustomReminders();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useAddCustomReminder() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ name, description, interval, enabled }: { name: string; description: string; interval: bigint; enabled: boolean }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.addCustomReminder(name, description, interval, enabled);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customReminders'] });
+    },
+  });
+}
+
+export function useUpdateCustomReminder() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ name, description, interval, enabled }: { name: string; description: string; interval: bigint; enabled: boolean }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.updateCustomReminder(name, description, interval, enabled);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customReminders'] });
+    },
+  });
+}
+
+export function useRemoveCustomReminder() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (name: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.removeCustomReminder(name);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customReminders'] });
+    },
   });
 }

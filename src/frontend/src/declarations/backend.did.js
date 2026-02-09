@@ -18,19 +18,44 @@ export const HydrationLog = IDL.Record({
   'date' : IDL.Int,
   'totalIntake' : IDL.Float64,
 });
+export const RunningLog = IDL.Record({
+  'pace' : IDL.Float64,
+  'time' : IDL.Int,
+  'completed' : IDL.Bool,
+  'distance' : IDL.Float64,
+  'timestamp' : IDL.Int,
+});
+export const SleepLog = IDL.Record({ 'hours' : IDL.Float64, 'date' : IDL.Int });
 export const UserData = IDL.Record({
   'dailyGoal' : IDL.Float64,
   'cupSize' : IDL.Float64,
 });
+export const CustomReminderDefinition = IDL.Record({
+  'name' : IDL.Text,
+  'description' : IDL.Text,
+  'intervalInNanos' : IDL.Int,
+  'enabled' : IDL.Bool,
+  'lastSent' : IDL.Int,
+});
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addCustomReminder' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Int, IDL.Bool],
+      [],
+      [],
+    ),
   'addDailyIntake' : IDL.Func([IDL.Float64], [], []),
+  'addSleepLog' : IDL.Func([IDL.Float64], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getIntakeHistory' : IDL.Func([], [IDL.Vec(HydrationLog)], ['query']),
+  'getRunningHistory' : IDL.Func([], [IDL.Vec(RunningLog)], ['query']),
+  'getSleepHistory' : IDL.Func([], [IDL.Vec(SleepLog)], ['query']),
   'getTodaysIntake' : IDL.Func([], [IDL.Float64], ['query']),
+  'getTodaysRuns' : IDL.Func([], [IDL.Vec(RunningLog)], ['query']),
+  'getTodaysSleep' : IDL.Func([], [IDL.Float64], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -38,7 +63,19 @@ export const idlService = IDL.Service({
     ),
   'getUserSettings' : IDL.Func([], [IDL.Opt(UserData)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'listCustomReminders' : IDL.Func(
+      [],
+      [IDL.Vec(CustomReminderDefinition)],
+      ['query'],
+    ),
+  'logRun' : IDL.Func([IDL.Float64, IDL.Int, IDL.Float64, IDL.Bool], [], []),
+  'removeCustomReminder' : IDL.Func([IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'updateCustomReminder' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Int, IDL.Bool],
+      [],
+      [],
+    ),
   'updateUserSettings' : IDL.Func([IDL.Float64, IDL.Float64], [], []),
 });
 
@@ -55,19 +92,44 @@ export const idlFactory = ({ IDL }) => {
     'date' : IDL.Int,
     'totalIntake' : IDL.Float64,
   });
+  const RunningLog = IDL.Record({
+    'pace' : IDL.Float64,
+    'time' : IDL.Int,
+    'completed' : IDL.Bool,
+    'distance' : IDL.Float64,
+    'timestamp' : IDL.Int,
+  });
+  const SleepLog = IDL.Record({ 'hours' : IDL.Float64, 'date' : IDL.Int });
   const UserData = IDL.Record({
     'dailyGoal' : IDL.Float64,
     'cupSize' : IDL.Float64,
   });
+  const CustomReminderDefinition = IDL.Record({
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'intervalInNanos' : IDL.Int,
+    'enabled' : IDL.Bool,
+    'lastSent' : IDL.Int,
+  });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addCustomReminder' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Int, IDL.Bool],
+        [],
+        [],
+      ),
     'addDailyIntake' : IDL.Func([IDL.Float64], [], []),
+    'addSleepLog' : IDL.Func([IDL.Float64], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getIntakeHistory' : IDL.Func([], [IDL.Vec(HydrationLog)], ['query']),
+    'getRunningHistory' : IDL.Func([], [IDL.Vec(RunningLog)], ['query']),
+    'getSleepHistory' : IDL.Func([], [IDL.Vec(SleepLog)], ['query']),
     'getTodaysIntake' : IDL.Func([], [IDL.Float64], ['query']),
+    'getTodaysRuns' : IDL.Func([], [IDL.Vec(RunningLog)], ['query']),
+    'getTodaysSleep' : IDL.Func([], [IDL.Float64], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -75,7 +137,19 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getUserSettings' : IDL.Func([], [IDL.Opt(UserData)], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'listCustomReminders' : IDL.Func(
+        [],
+        [IDL.Vec(CustomReminderDefinition)],
+        ['query'],
+      ),
+    'logRun' : IDL.Func([IDL.Float64, IDL.Int, IDL.Float64, IDL.Bool], [], []),
+    'removeCustomReminder' : IDL.Func([IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'updateCustomReminder' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Int, IDL.Bool],
+        [],
+        [],
+      ),
     'updateUserSettings' : IDL.Func([IDL.Float64, IDL.Float64], [], []),
   });
 };

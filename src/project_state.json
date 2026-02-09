@@ -1,11 +1,10 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
-  "summary": "Build a water drinking reminder app.",
+  "projectStateVersion": 5,
+  "summary": "Expand the app from a water drinking reminder into a broader health reminders and tracking app (including sleep scheduling, running tracking, and other health reminders/trackers).",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- Minimal line-art water glass icon with soft green accents (app-icon.dim_512x512.png)\n- Calm abstract hydration-themed header illustration with warm neutrals and green highlights (header-illustration.dim_1600x400.png)\n- Simple empty-state illustration showing a water bottle and small sparkles, warm neutral background (empty-state.dim_800x600.png)",
   "existing_features": [
     {
       "id": "feature-implement-internet-identity-sign-in-so-reminders-settings-and-intake-history-are-stored-per-user-principal",
@@ -62,6 +61,30 @@
         "REQ-8"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-extend-the-frontend-ui-to-include-new-sections-for-sleep-and-running-alongside-existing-hydration-features-using-clear-navigation-within-the-existing-app-layout",
+      "title": "Extend the frontend UI to include new sections for Sleep and Running, alongside existing Hydration features, using clear navigation within the existing App layout.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-react-query-hooks-and-frontend-data-flow-for-sleep-running-and-custom-reminders-using-the-existing-actor-based-pattern",
+      "title": "Add React Query hooks and frontend data flow for sleep, running, and custom reminders using the existing actor-based pattern.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-in-app-reminder-scheduler-to-support-triggering-reminders-for-the-new-reminder-types-sleep-and-user-defined-health-reminders-in-addition-to-hydration-using-browser-notifications-when-permitted-and-otherwise-an-in-app-banner-toast",
+      "title": "Update the in-app reminder scheduler to support triggering reminders for the new reminder types (sleep and user-defined health reminders) in addition to hydration, using browser Notifications when permitted and otherwise an in-app banner/toast.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -76,6 +99,48 @@
       "summary": "Create backend data models and APIs to store and retrieve a user’s hydration settings and intake log.",
       "reqIds": [
         "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Add a sleep scheduler (sleep reminders, scheduling, and related tracking).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Add a running tracker (log runs and view basic running stats/history).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Support additional health reminders and trackers beyond hydration (configurable reminder types and tracking categories).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Add backend data models and actor APIs for sleep scheduling and sleep tracking stored per authenticated caller Principal.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add backend data models and actor APIs for a running tracker that lets an authenticated user log runs and view basic running history/stats stored per caller Principal.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Add backend support for additional (non-hydration) health reminders by allowing users to create, update, list, and delete custom reminder definitions stored per caller Principal.",
+      "reqIds": [
+        "REQ-11"
       ],
       "status": "pending"
     }

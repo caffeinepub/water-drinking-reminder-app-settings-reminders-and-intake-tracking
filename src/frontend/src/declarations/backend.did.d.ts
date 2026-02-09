@@ -10,7 +10,22 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface CustomReminderDefinition {
+  'name' : string,
+  'description' : string,
+  'intervalInNanos' : bigint,
+  'enabled' : boolean,
+  'lastSent' : bigint,
+}
 export interface HydrationLog { 'date' : bigint, 'totalIntake' : number }
+export interface RunningLog {
+  'pace' : number,
+  'time' : bigint,
+  'completed' : boolean,
+  'distance' : number,
+  'timestamp' : bigint,
+}
+export interface SleepLog { 'hours' : number, 'date' : bigint }
 export interface UserData { 'dailyGoal' : number, 'cupSize' : number }
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
@@ -18,16 +33,44 @@ export type UserRole = { 'admin' : null } |
   { 'guest' : null };
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  /**
+   * / Custom Reminders System
+   */
+  'addCustomReminder' : ActorMethod<
+    [string, string, bigint, boolean],
+    undefined
+  >,
   'addDailyIntake' : ActorMethod<[number], undefined>,
+  /**
+   * / Sleep Tracking Functions
+   */
+  'addSleepLog' : ActorMethod<[number], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getIntakeHistory' : ActorMethod<[], Array<HydrationLog>>,
+  'getRunningHistory' : ActorMethod<[], Array<RunningLog>>,
+  'getSleepHistory' : ActorMethod<[], Array<SleepLog>>,
   'getTodaysIntake' : ActorMethod<[], number>,
+  'getTodaysRuns' : ActorMethod<[], Array<RunningLog>>,
+  'getTodaysSleep' : ActorMethod<[], number>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'getUserSettings' : ActorMethod<[], [] | [UserData]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'listCustomReminders' : ActorMethod<[], Array<CustomReminderDefinition>>,
+  /**
+   * / Running Tracker
+   */
+  'logRun' : ActorMethod<[number, bigint, number, boolean], undefined>,
+  'removeCustomReminder' : ActorMethod<[string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'updateCustomReminder' : ActorMethod<
+    [string, string, bigint, boolean],
+    undefined
+  >,
+  /**
+   * / Hydration Tracking Functions
+   */
   'updateUserSettings' : ActorMethod<[number, number], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;

@@ -1,172 +1,143 @@
 {
   "kind": "build_request",
-  "title": "Water Drinking Reminder App (settings, reminders, and intake tracking)",
+  "title": "Expand app with sleep scheduling, running tracker, and additional health reminders/tracking",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Implement Internet Identity sign-in so reminders, settings, and intake history are stored per user Principal.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "I want a water drinking reminder app"
-        ]
-      },
-      "acceptanceCriteria": [
-        "User can sign in and sign out using Internet Identity.",
-        "After sign-in, the app shows the signed-in state and loads user-specific data.",
-        "Data shown after reload remains tied to the same Principal."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Create backend data models and APIs to store and retrieve a user’s hydration settings and intake log.",
+      "id": "REQ-9",
+      "text": "Add backend data models and actor APIs for sleep scheduling and sleep tracking stored per authenticated caller Principal.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "I want a water drinking reminder app"
+          "Add sleep scheduler, running tracker and other health reminders and tracker"
         ]
       },
       "acceptanceCriteria": [
-        "Backend stores settings per Principal: dailyGoalMl, reminderIntervalMinutes, activeHoursStart, activeHoursEnd, defaultCupMl (or equivalent).",
-        "Backend stores intake events per Principal with timestamp (and amount).",
-        "APIs exist to: getSettings, upsertSettings, addIntake(amountMl), listIntake(range), and getTodayProgress.",
-        "Unauthenticated calls that require a Principal are rejected with a clear error."
+        "Backend exposes query + update APIs to save and retrieve the caller’s sleep schedule settings (at minimum: enabled flag, target bedtime, target wake time, and applicable days of week).",
+        "Backend exposes APIs to add a sleep log entry and to fetch recent sleep log history for the caller.",
+        "All sleep schedule/log APIs enforce the same authorization pattern used by existing hydration APIs (caller must have #user permission; no cross-user access)."
       ]
     },
     {
-      "id": "REQ-3",
-      "text": "Build the main UI to configure hydration settings: daily water goal, reminder interval, active hours window, and default cup size.",
+      "id": "REQ-10",
+      "text": "Add backend data models and actor APIs for a running tracker that lets an authenticated user log runs and view basic running history/stats stored per caller Principal.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add sleep scheduler, running tracker and other health reminders and tracker"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes an API to add a run log entry (at minimum: date/time, distance, duration; optional notes).",
+        "Backend exposes an API to fetch recent run history for the caller.",
+        "All running APIs enforce the same authorization pattern used by existing hydration APIs (caller must have #user permission; no cross-user access)."
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "text": "Add backend support for additional (non-hydration) health reminders by allowing users to create, update, list, and delete custom reminder definitions stored per caller Principal.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Add sleep scheduler, running tracker and other health reminders and tracker"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes APIs to create/list/update/delete reminder definitions for the caller.",
+        "A reminder definition includes (at minimum) a user-visible title, an enabled flag, and a schedule configuration sufficient for the frontend to trigger reminders (e.g., time-of-day OR repeating interval minutes).",
+        "All reminder APIs enforce the same authorization pattern used by existing hydration APIs (caller must have #user permission; no cross-user access)."
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "text": "Extend the frontend UI to include new sections for Sleep and Running, alongside existing Hydration features, using clear navigation within the existing App layout.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "I want a water drinking reminder app"
+          "Add sleep scheduler, running tracker and other health reminders and tracker"
         ]
       },
       "acceptanceCriteria": [
-        "Settings form includes fields for daily goal (ml), reminder interval (minutes), active hours start/end (local time), and default cup size (ml).",
-        "Saving settings persists to backend and reload reflects saved values.",
-        "Validation prevents nonsensical inputs (e.g., negative values, interval too small/large, invalid time window)."
+        "Authenticated users can navigate to a Sleep section where they can configure a sleep schedule and log sleep entries, and can view a recent sleep history list.",
+        "Authenticated users can navigate to a Running section where they can log runs and view a recent run history list with basic summary stats (e.g., total distance for last 7 days and/or average pace derived from logged data).",
+        "All new user-facing text is in English.",
+        "Existing hydration tabs/features (Reminders, History, Settings, Today’s progress, Quick add) remain functional."
       ]
     },
     {
-      "id": "REQ-4",
-      "text": "Add an in-app reminder scheduler that triggers during the configured active hours and uses browser Notification API (local notifications) when permission is granted; otherwise show an in-app toast/banner reminder.",
+      "id": "REQ-13",
+      "text": "Add React Query hooks and frontend data flow for sleep, running, and custom reminders using the existing actor-based pattern.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "I want a water drinking reminder app"
+          "Add sleep scheduler, running tracker and other health reminders and tracker"
         ]
       },
       "acceptanceCriteria": [
-        "App requests Notification permission via an explicit user action (e.g., “Enable notifications” button).",
-        "When permission is granted, reminders produce a browser notification at the configured interval, only within active hours.",
-        "When permission is denied/unavailable, reminders still appear as an in-app visual reminder.",
-        "User can start/pause reminders from the UI, and state is clearly indicated."
+        "frontend/src/hooks/useQueries.ts (or additional hook modules) includes query/mutation hooks for sleep schedule, sleep logs, run logs, and custom reminder definitions.",
+        "On successful mutations, the correct cached queries are invalidated so the UI refreshes without a manual reload.",
+        "Hooks work with Internet Identity authentication and handle the actor-not-available state consistently with existing hooks."
       ]
     },
     {
-      "id": "REQ-5",
-      "text": "Implement intake logging UX: quick-add buttons based on default cup size (e.g., +1 cup, +250ml, custom amount) and display today’s progress toward the daily goal.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "I want a water drinking reminder app"
-        ]
-      },
-      "acceptanceCriteria": [
-        "User can add an intake entry with one click using a quick-add button, and optionally add a custom amount.",
-        "Each intake addition is persisted to the backend and immediately reflected in the UI progress.",
-        "UI shows today’s total consumed (ml) and remaining-to-goal (or over-goal) indicator.",
-        "If backend call fails, UI shows an error and does not incorrectly increment totals."
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Provide a history/stats view for recent intake (at minimum: today and the last 7 days) with a simple chart or list breakdown.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "I want a water drinking reminder app"
-        ]
-      },
-      "acceptanceCriteria": [
-        "User can view daily totals for at least the last 7 days.",
-        "History is fetched from backend and is user-specific.",
-        "UI includes a clear empty state when no intake exists."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Apply a coherent visual theme (colors, typography, spacing, layout) appropriate for a calm hydration/health app and use it consistently across all pages and components (avoid blue/purple as the primary palette).",
+      "id": "REQ-14",
+      "text": "Update the in-app reminder scheduler to support triggering reminders for the new reminder types (sleep and user-defined health reminders) in addition to hydration, using browser Notifications when permitted and otherwise an in-app banner/toast.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "I want a water drinking reminder app"
+          "Add sleep scheduler, running tracker and other health reminders and tracker"
         ]
       },
       "acceptanceCriteria": [
-        "App has a consistent theme across settings, reminders, progress, and history views.",
-        "Theme uses a calm, hydration-adjacent palette that is not primarily blue/purple.",
-        "UI is responsive and readable on mobile widths."
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "text": "Add generated static image assets to the frontend and use them in the UI (e.g., app header/empty states) by serving them from frontend/public/assets/generated (not via backend).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-2"
-        ],
-        "quotes": [
-          "I want a water drinking reminder app"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Generated images are present under frontend/public/assets/generated with the specified filenames.",
-        "UI references these images via static paths and displays them appropriately.",
-        "No backend endpoints are created to serve images."
+        "The scheduler can display distinct reminder content (title/body) for different reminder types (e.g., Hydration vs Sleep vs Custom).",
+        "When Notification permission is granted, notifications use an appropriate tag per reminder type so repeated notifications behave predictably in the browser.",
+        "When Notification permission is not granted or notification display fails, an in-app reminder UI is shown that clearly indicates which reminder fired (English text).",
+        "The existing hydration reminder controls continue to work, and new reminder types can be enabled/disabled without breaking hydration reminders."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
-    "Do not edit files under frontend/src/components/ui or other immutable paths; compose them instead.",
-    "Use English for all user-facing text."
+    "Respect the single-actor backend architecture: keep all Motoko logic in backend/main.mo.",
+    "Do not edit files under frontend/src/components/ui or any other frontend immutablePaths listed in SYSTEM_CONTEXT.",
+    "Use Internet Identity as the only authentication mechanism; store all user data per Principal.",
+    "Do not add external databases or third-party real-time services; scheduling remains in-browser while the app is open."
   ],
   "nonGoals": [
-    "Push notifications (OS-level) or background notifications when the app is closed.",
-    "Integrations with external wearable/health platforms (Apple Health, Google Fit, Fitbit, etc.).",
-    "Multi-canister backend architecture or external databases."
+    "Integrating wearable devices or importing data from Apple Health / Google Fit / Strava.",
+    "True background notifications or push notifications when the app/tab is closed.",
+    "Advanced running analytics (GPS routes, maps, VO2 max, cadence) beyond basic logged entries and simple derived stats.",
+    "Medical advice features or diagnosis features."
   ],
   "imageRequirements": {
-    "required": [
-      "Minimal line-art water glass icon with soft green accents (app-icon.dim_512x512.png)",
-      "Calm abstract hydration-themed header illustration with warm neutrals and green highlights (header-illustration.dim_1600x400.png)",
-      "Simple empty-state illustration showing a water bottle and small sparkles, warm neutral background (empty-state.dim_800x600.png)"
-    ],
+    "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

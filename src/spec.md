@@ -1,16 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Build a signed-in water drinking reminder app that lets each Internet Identity user configure hydration settings, receive in-app/browser reminders, and track daily intake with recent history.
+**Goal:** Expand the health app beyond hydration by adding sleep scheduling/tracking, a running tracker, and support for additional custom health reminders.
 
 **Planned changes:**
-- Add Internet Identity sign-in/sign-out and load/store all user data by Principal.
-- Implement a single Motoko backend actor with models and APIs for hydration settings and intake events (getSettings, upsertSettings, addIntake, listIntake, getTodayProgress), rejecting unauthenticated calls where required.
-- Build a settings UI for daily goal (ml), reminder interval (minutes), active hours start/end, and default cup size (ml) with input validation and persistence.
-- Add a reminder scheduler with start/pause controls; request Notification permission via explicit user action; use browser notifications when granted, otherwise show an in-app reminder.
-- Implement intake logging UX (quick-add using default cup size, preset amount, and custom amount) and show today’s progress vs goal with correct error handling on failed saves.
-- Provide a history/stats view showing at least today + last 7 days with a simple chart or list and an empty state.
-- Apply a consistent calm health/hydration theme across the app (not primarily blue/purple) and ensure mobile readability.
-- Add and reference generated static images from `frontend/public/assets/generated` in the UI (e.g., header/empty state) without backend image serving.
+- Add backend data models and APIs for sleep schedule settings (enabled, target bedtime/wake time, days of week) and sleep log entries per authenticated user.
+- Add backend data models and APIs for run log entries (date/time, distance, duration, optional notes) and recent running history/stats per authenticated user.
+- Add backend APIs to create, update, list, and delete custom (non-hydration) reminder definitions per authenticated user (title, enabled, schedule configuration).
+- Extend the frontend UI with new Sleep and Running sections within the existing app layout/navigation while keeping all existing hydration features functional.
+- Add React Query hooks/mutations for sleep schedule/logs, run logs, and custom reminders using the existing actor-based pattern, including cache invalidation and consistent actor-not-available handling.
+- Update the in-app reminder scheduler to trigger and display distinct reminders for Hydration, Sleep, and Custom reminders, using browser Notifications when permitted and falling back to an in-app banner/toast.
 
-**User-visible outcome:** Users can sign in with Internet Identity, set their goal and reminder preferences, start/pause reminders, log water intake with quick actions, see today’s progress, and review the last 7 days of intake—using a consistent calm theme with included static illustrations.
+**User-visible outcome:** Authenticated users can configure a sleep schedule, log and view sleep history, log runs and view running history with basic stats, and create/manage additional custom health reminders—all while existing hydration tracking and reminders continue to work.

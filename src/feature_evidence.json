@@ -2,13 +2,16 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-implement-internet-identity-sign-in-so-reminders-settings-and-intake-history-are-stored-per-user-principal",
-      "featureTitle": "Implement Internet Identity sign-in so reminders, settings, and intake history are stored per user Principal.",
+      "featureId": "feature-extend-the-frontend-ui-to-include-new-sections-for-sleep-and-running-alongside-existing-hydration-features-using-clear-navigation-within-the-existing-app-layout",
+      "featureTitle": "Extend the frontend UI to include new sections for Sleep and Running, alongside existing Hydration features, using clear navigation within the existing App layout.",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/components/auth/LoginButton.tsx",
-        "frontend/src/components/auth/ProfileSetupModal.tsx",
-        "frontend/src/main.tsx"
+        "frontend/src/components/running/RunHistoryList.tsx",
+        "frontend/src/components/running/RunLogForm.tsx",
+        "frontend/src/components/running/RunningView.tsx",
+        "frontend/src/components/sleep/SleepHistoryList.tsx",
+        "frontend/src/components/sleep/SleepLogForm.tsx",
+        "frontend/src/components/sleep/SleepView.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,16 +22,18 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-1"
+        "REQ-12"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-build-the-main-ui-to-configure-hydration-settings-daily-water-goal-reminder-interval-active-hours-window-and-default-cup-size",
-      "featureTitle": "Build the main UI to configure hydration settings: daily water goal, reminder interval, active hours window, and default cup size.",
+      "featureId": "feature-add-react-query-hooks-and-frontend-data-flow-for-sleep-running-and-custom-reminders-using-the-existing-actor-based-pattern",
+      "featureTitle": "Add React Query hooks and frontend data flow for sleep, running, and custom reminders using the existing actor-based pattern.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/settings/SettingsForm.tsx"
+        "frontend/src/components/reminders/ReminderControls.tsx",
+        "frontend/src/components/running/RunLogForm.tsx",
+        "frontend/src/components/sleep/SleepLogForm.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -39,18 +44,18 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-13"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-an-in-app-reminder-scheduler-that-triggers-during-the-configured-active-hours-and-uses-browser-notification-api-local-notifications-when-permission-is-granted-otherwise-show-an-in-app-toast-banner-reminder",
-      "featureTitle": "Add an in-app reminder scheduler that triggers during the configured active hours and uses browser Notification API (local notifications) when permission is granted; otherwise show an in-app toast/banner reminder.",
+      "featureId": "feature-update-the-in-app-reminder-scheduler-to-support-triggering-reminders-for-the-new-reminder-types-sleep-and-user-defined-health-reminders-in-addition-to-hydration-using-browser-notifications-when-permitted-and-otherwise-an-in-app-banner-toast",
+      "featureTitle": "Update the in-app reminder scheduler to support triggering reminders for the new reminder types (sleep and user-defined health reminders) in addition to hydration, using browser Notifications when permitted and otherwise an in-app banner/toast.",
       "files": [
         "frontend/src/App.tsx",
         "frontend/src/components/reminders/InAppReminderBanner.tsx",
         "frontend/src/components/reminders/ReminderControls.tsx",
-        "frontend/src/hooks/useReminderScheduler.ts"
+        "frontend/src/hooks/useReminderSchedulerContext.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -61,91 +66,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-intake-logging-ux-quick-add-buttons-based-on-default-cup-size-e-g-1-cup-250ml-custom-amount-and-display-today-s-progress-toward-the-daily-goal",
-      "featureTitle": "Implement intake logging UX: quick-add buttons based on default cup size (e.g., +1 cup, +250ml, custom amount) and display today’s progress toward the daily goal.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/intake/QuickAddIntake.tsx",
-        "frontend/src/components/intake/TodayProgress.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-provide-a-history-stats-view-for-recent-intake-at-minimum-today-and-the-last-7-days-with-a-simple-chart-or-list-breakdown",
-      "featureTitle": "Provide a history/stats view for recent intake (at minimum: today and the last 7 days) with a simple chart or list breakdown.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/history/EmptyState.tsx",
-        "frontend/src/components/history/HistoryView.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-apply-a-coherent-visual-theme-colors-typography-spacing-layout-appropriate-for-a-calm-hydration-health-app-and-use-it-consistently-across-all-pages-and-components-avoid-blue-purple-as-the-primary-palette",
-      "featureTitle": "Apply a coherent visual theme (colors, typography, spacing, layout) appropriate for a calm hydration/health app and use it consistently across all pages and components (avoid blue/purple as the primary palette).",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-7"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-generated-static-image-assets-to-the-frontend-and-use-them-in-the-ui-e-g-app-header-empty-states-by-serving-them-from-frontend-public-assets-generated-not-via-backend",
-      "featureTitle": "Add generated static image assets to the frontend and use them in the UI (e.g., app header/empty states) by serving them from frontend/public/assets/generated (not via backend).",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/history/EmptyState.tsx",
-        "frontend/src/components/layout/AppHeader.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-8"
+        "REQ-14"
       ],
       "confidence": "high"
     }

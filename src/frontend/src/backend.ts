@@ -89,6 +89,24 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface SleepLog {
+    hours: number;
+    date: bigint;
+}
+export interface RunningLog {
+    pace: number;
+    time: bigint;
+    completed: boolean;
+    distance: number;
+    timestamp: bigint;
+}
+export interface CustomReminderDefinition {
+    name: string;
+    description: string;
+    intervalInNanos: bigint;
+    enabled: boolean;
+    lastSent: bigint;
+}
 export interface HydrationLog {
     date: bigint;
     totalIntake: number;
@@ -107,16 +125,38 @@ export enum UserRole {
 }
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    /**
+     * / Custom Reminders System
+     */
+    addCustomReminder(name: string, description: string, interval: bigint, enabled: boolean): Promise<void>;
     addDailyIntake(amount: number): Promise<void>;
+    /**
+     * / Sleep Tracking Functions
+     */
+    addSleepLog(hours: number): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getIntakeHistory(): Promise<Array<HydrationLog>>;
+    getRunningHistory(): Promise<Array<RunningLog>>;
+    getSleepHistory(): Promise<Array<SleepLog>>;
     getTodaysIntake(): Promise<number>;
+    getTodaysRuns(): Promise<Array<RunningLog>>;
+    getTodaysSleep(): Promise<number>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     getUserSettings(): Promise<UserData | null>;
     isCallerAdmin(): Promise<boolean>;
+    listCustomReminders(): Promise<Array<CustomReminderDefinition>>;
+    /**
+     * / Running Tracker
+     */
+    logRun(distance: number, time: bigint, pace: number, completed: boolean): Promise<void>;
+    removeCustomReminder(name: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    updateCustomReminder(name: string, description: string, interval: bigint, enabled: boolean): Promise<void>;
+    /**
+     * / Hydration Tracking Functions
+     */
     updateUserSettings(dailyGoal: number, cupSize: number): Promise<void>;
 }
 import type { UserData as _UserData, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
@@ -136,6 +176,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async addCustomReminder(arg0: string, arg1: string, arg2: bigint, arg3: boolean): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addCustomReminder(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addCustomReminder(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
     async addDailyIntake(arg0: number): Promise<void> {
         if (this.processError) {
             try {
@@ -147,6 +201,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.addDailyIntake(arg0);
+            return result;
+        }
+    }
+    async addSleepLog(arg0: number): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.addSleepLog(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.addSleepLog(arg0);
             return result;
         }
     }
@@ -206,6 +274,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getRunningHistory(): Promise<Array<RunningLog>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getRunningHistory();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getRunningHistory();
+            return result;
+        }
+    }
+    async getSleepHistory(): Promise<Array<SleepLog>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSleepHistory();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSleepHistory();
+            return result;
+        }
+    }
     async getTodaysIntake(): Promise<number> {
         if (this.processError) {
             try {
@@ -217,6 +313,34 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getTodaysIntake();
+            return result;
+        }
+    }
+    async getTodaysRuns(): Promise<Array<RunningLog>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getTodaysRuns();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getTodaysRuns();
+            return result;
+        }
+    }
+    async getTodaysSleep(): Promise<number> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getTodaysSleep();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getTodaysSleep();
             return result;
         }
     }
@@ -262,6 +386,48 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async listCustomReminders(): Promise<Array<CustomReminderDefinition>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.listCustomReminders();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.listCustomReminders();
+            return result;
+        }
+    }
+    async logRun(arg0: number, arg1: bigint, arg2: number, arg3: boolean): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.logRun(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.logRun(arg0, arg1, arg2, arg3);
+            return result;
+        }
+    }
+    async removeCustomReminder(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.removeCustomReminder(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.removeCustomReminder(arg0);
+            return result;
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -273,6 +439,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.saveCallerUserProfile(arg0);
+            return result;
+        }
+    }
+    async updateCustomReminder(arg0: string, arg1: string, arg2: bigint, arg3: boolean): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateCustomReminder(arg0, arg1, arg2, arg3);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateCustomReminder(arg0, arg1, arg2, arg3);
             return result;
         }
     }
