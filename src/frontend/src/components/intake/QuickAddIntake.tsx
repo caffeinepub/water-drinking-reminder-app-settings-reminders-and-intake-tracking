@@ -130,12 +130,12 @@ export default function QuickAddIntake() {
             <span className="text-xs font-medium">{cupSize * 2} ml</span>
           </Button>
           <Button
-            onClick={() => handleQuickAdd(500)}
+            onClick={() => handleQuickAdd(750)}
             disabled={addIntake.isPending}
             className="h-20 flex flex-col gap-1 bg-gradient-to-br from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 shadow-md hover:shadow-lg transition-all hover:scale-105"
           >
             <span className="text-2xl">🍶</span>
-            <span className="text-xs font-medium">500 ml</span>
+            <span className="text-xs font-medium">750 ml</span>
           </Button>
         </div>
 

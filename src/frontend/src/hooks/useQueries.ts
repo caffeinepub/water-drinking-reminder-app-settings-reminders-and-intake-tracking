@@ -5,7 +5,7 @@ import { useOnlineStatus } from './useOnlineStatus';
 import { useOfflinePreference } from '../offline/useOfflinePreference';
 import { OfflineQueue } from '../offline/offlineQueue';
 import { writeOfflineData, readOfflineData } from '../offline/offlineStorage';
-import type { UserProfile, UserData, HydrationLog, SleepLog, RunningLog, CustomReminderDefinition, UserRewards } from '../backend';
+import type { UserProfile, UserData, HydrationLog, SleepLog, RunningLog, CustomReminderDefinition, UserRewards, AnalyticsMetrics, UserAnalyticsEntry } from '../backend';
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -308,6 +308,41 @@ export function useGetSleepHistory() {
 }
 
 // Running tracking hooks
+export function useGetTodaysRuns() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const isOnline = useOnlineStatus();
+  const { enabled: offlineEnabled } = useOfflinePreference();
+
+  return useQuery<RunningLog[]>({
+    queryKey: ['todaysRuns'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      
+      // If offline and offline mode enabled, return cached data
+      if (!isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        const cached = readOfflineData<RunningLog[]>(principal, 'todaysRuns');
+        if (cached) {
+          return cached.data;
+        }
+      }
+      
+      const data = await actor.getTodaysRuns();
+      
+      // Cache successful online fetch
+      if (isOnline && offlineEnabled && identity) {
+        const principal = identity.getPrincipal().toString();
+        writeOfflineData(principal, 'todaysRuns', data);
+      }
+      
+      return data;
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 30000,
+  });
+}
+
 export function useLogRun() {
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
@@ -335,8 +370,8 @@ export function useLogRun() {
         return;
       }
       
-      queryClient.invalidateQueries({ queryKey: ['runningHistory'] });
       queryClient.invalidateQueries({ queryKey: ['todaysRuns'] });
+      queryClient.invalidateQueries({ queryKey: ['runningHistory'] });
     },
   });
 }
@@ -372,20 +407,6 @@ export function useGetRunningHistory() {
       return data;
     },
     enabled: !!actor && !actorFetching,
-  });
-}
-
-export function useGetTodaysRuns() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<RunningLog[]>({
-    queryKey: ['todaysRuns'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getTodaysRuns();
-    },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: 30000,
   });
 }
 
@@ -448,20 +469,84 @@ export function useRemoveCustomReminder() {
   });
 }
 
-// Helper to check if data is from offline cache
-export function useIsOfflineData(queryKey: string[]): { isOfflineData: boolean; cachedAt?: number } {
+// Admin hooks
+export function useIsCallerAdmin() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ['isCallerAdmin'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.isCallerAdmin();
+    },
+    enabled: !!actor && !actorFetching,
+    retry: false,
+  });
+}
+
+export function useGetAnalyticsMetrics() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { data: isAdmin } = useIsCallerAdmin();
+
+  return useQuery<AnalyticsMetrics>({
+    queryKey: ['analyticsMetrics'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      try {
+        return await actor.getAnalyticsMetrics();
+      } catch (error: any) {
+        if (error.message?.includes('Unauthorized') || error.message?.includes('trap')) {
+          throw new Error('Permission denied: Admin access required');
+        }
+        throw error;
+      }
+    },
+    enabled: !!actor && !actorFetching && isAdmin === true,
+    retry: false,
+  });
+}
+
+export function useGetAllUserAnalytics() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { data: isAdmin } = useIsCallerAdmin();
+
+  return useQuery<UserAnalyticsEntry[]>({
+    queryKey: ['allUserAnalytics'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      try {
+        return await actor.getAllUserAnalytics();
+      } catch (error: any) {
+        if (error.message?.includes('Unauthorized') || error.message?.includes('trap')) {
+          throw new Error('Permission denied: Admin access required');
+        }
+        throw error;
+      }
+    },
+    enabled: !!actor && !actorFetching && isAdmin === true,
+    retry: false,
+  });
+}
+
+// Helper hook to check if data is from offline cache
+export function useIsOfflineData(queryKey: string[]) {
   const { identity } = useInternetIdentity();
   const isOnline = useOnlineStatus();
   const { enabled: offlineEnabled } = useOfflinePreference();
 
   if (!isOnline && offlineEnabled && identity) {
     const principal = identity.getPrincipal().toString();
-    const key = queryKey[0];
-    const cached = readOfflineData(principal, key);
+    const cached = readOfflineData(principal, queryKey[0]);
     if (cached) {
-      return { isOfflineData: true, cachedAt: cached.timestamp };
+      return {
+        isOfflineData: true,
+        cachedAt: cached.timestamp,
+      };
     }
   }
 
-  return { isOfflineData: false };
+  return {
+    isOfflineData: false,
+    cachedAt: undefined,
+  };
 }

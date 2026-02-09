@@ -10,6 +10,14 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AnalyticsMetrics {
+  'weeklyActiveUsers' : bigint,
+  'totalUniqueUsers' : bigint,
+  'dailyActiveUsers' : bigint,
+  'totalSleepEvents' : bigint,
+  'totalHydrationEvents' : bigint,
+  'totalRunningEvents' : bigint,
+}
 export interface CustomReminderDefinition {
   'name' : string,
   'description' : string,
@@ -30,6 +38,14 @@ export interface RunningLog {
   'timestamp' : bigint,
 }
 export interface SleepLog { 'hours' : number, 'date' : bigint }
+export interface UserAnalyticsEntry {
+  'runningLogs' : bigint,
+  'principal' : Principal,
+  'issuedDay' : bigint,
+  'hydrationLogs' : bigint,
+  'sleepLogs' : bigint,
+  'profileName' : string,
+}
 export interface UserData { 'dailyGoal' : number, 'cupSize' : number }
 export interface UserProfile { 'name' : string }
 export interface UserRewards {
@@ -56,6 +72,8 @@ export interface _SERVICE {
    */
   'addSleepLog' : ActorMethod<[number], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'getAllUserAnalytics' : ActorMethod<[], Array<UserAnalyticsEntry>>,
+  'getAnalyticsMetrics' : ActorMethod<[], AnalyticsMetrics>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getIntakeHistory' : ActorMethod<[], Array<HydrationLog>>,

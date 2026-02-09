@@ -1,7 +1,9 @@
 import { useInternetIdentity } from './hooks/useInternetIdentity';
-import { useGetCallerUserProfile } from './hooks/useQueries';
+import { useGetCallerUserProfile, useIsCallerAdmin } from './hooks/useQueries';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toaster } from '@/components/ui/sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 import AppHeader from './components/layout/AppHeader';
 import LoginButton from './components/auth/LoginButton';
 import ProfileSetupModal from './components/auth/ProfileSetupModal';
@@ -15,6 +17,7 @@ import HistoryView from './components/history/HistoryView';
 import SleepView from './components/sleep/SleepView';
 import RunningView from './components/running/RunningView';
 import RewardsPanel from './components/rewards/RewardsPanel';
+import AdminDashboard from './components/admin/AdminDashboard';
 import OfflineBanner from './components/pwa/OfflineBanner';
 import { ReminderSchedulerProvider } from './hooks/useReminderSchedulerContext';
 import { OfflineSyncProvider } from './offline/OfflineSyncProvider';
@@ -23,9 +26,13 @@ import { Droplets, Sparkles } from 'lucide-react';
 export default function App() {
   const { identity } = useInternetIdentity();
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
+  const { data: isAdmin, isLoading: adminCheckLoading, error: adminCheckError } = useIsCallerAdmin();
 
   const isAuthenticated = !!identity;
   const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+
+  // Only show Admin tab when we have a confirmed true result
+  const showAdminTab = isAdmin === true;
 
   if (!isAuthenticated) {
     return (
@@ -108,9 +115,19 @@ export default function App() {
                 <RewardsPanel />
               </section>
 
+              {/* Admin verification error notice */}
+              {adminCheckError && !adminCheckLoading && (
+                <Alert variant="destructive" className="max-w-3xl mx-auto">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Admin status could not be verified. Please check your connection and refresh the page.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Tabbed Interface */}
               <Tabs defaultValue="reminders" className="w-full">
-                <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto h-12 bg-card/80 backdrop-blur-sm border shadow-sm">
+                <TabsList className={`grid w-full ${showAdminTab ? 'grid-cols-6' : 'grid-cols-5'} max-w-3xl mx-auto h-12 bg-card/80 backdrop-blur-sm border shadow-sm`}>
                   <TabsTrigger value="reminders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                     Reminders
                   </TabsTrigger>
@@ -126,6 +143,11 @@ export default function App() {
                   <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                     Settings
                   </TabsTrigger>
+                  {showAdminTab && (
+                    <TabsTrigger value="admin" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                      Admin
+                    </TabsTrigger>
+                  )}
                 </TabsList>
                 
                 <TabsContent value="reminders" className="mt-6">
@@ -147,13 +169,19 @@ export default function App() {
                 <TabsContent value="settings" className="mt-6">
                   <SettingsForm />
                 </TabsContent>
+
+                {showAdminTab && (
+                  <TabsContent value="admin" className="mt-6">
+                    <AdminDashboard />
+                  </TabsContent>
+                )}
               </Tabs>
             </div>
           </main>
 
           <footer className="border-t mt-20 py-8 bg-card/30 backdrop-blur-sm relative z-10">
             <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-              <p>© 2026. Built with ❤️ using <a href="https://caffeine.ai" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">caffeine.ai</a></p>
+              <p>© {new Date().getFullYear()}. Built with ❤️ using <a href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">caffeine.ai</a></p>
             </div>
           </footer>
 

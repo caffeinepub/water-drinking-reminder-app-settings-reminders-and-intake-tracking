@@ -1,102 +1,32 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T07:55:37.237Z",
+  "generatedAt": "2026-02-09T15:17:44.973Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 1,
+    "implemented": 0,
     "items": [
       {
-        "id": "REQ-34",
-        "summary": "Add offline-first persistence for user-generated tracking actions so users can continue using the app while offline: when the device is offline, queue hydration intake logs, sleep logs, running logs, and settings updates locally and automatically sync them to the backend when connectivity is restored.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/offline/offlineQueue.ts",
-          "frontend/src/offline/offlineStorage.ts",
-          "frontend/src/offline/OfflineSyncProvider.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/intake/QuickAddIntake.tsx",
-          "frontend/src/components/sleep/SleepLogForm.tsx",
-          "frontend/src/components/running/RunLogForm.tsx",
-          "frontend/src/components/settings/SettingsForm.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/offline/offlineQueue.ts",
-          "frontend/src/offline/offlineStorage.ts",
-          "frontend/src/offline/OfflineSyncProvider.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/intake/QuickAddIntake.tsx",
-          "frontend/src/components/sleep/SleepLogForm.tsx",
-          "frontend/src/components/running/RunLogForm.tsx",
-          "frontend/src/components/settings/SettingsForm.tsx",
-          "frontend/src/App.tsx"
-        ]
-      },
-      {
-        "id": "REQ-35",
-        "summary": "Cache the last successfully fetched user data locally so the app can display meaningful read-only content while offline, including today’s totals and recent history for hydration, sleep, and running.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/offline/OfflineStaleNotice.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/intake/TodayProgress.tsx",
-          "frontend/src/components/history/HistoryView.tsx",
-          "frontend/src/components/sleep/SleepHistoryList.tsx",
-          "frontend/src/components/running/RunHistoryList.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/offline/OfflineStaleNotice.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/intake/TodayProgress.tsx",
-          "frontend/src/components/history/HistoryView.tsx",
-          "frontend/src/components/sleep/SleepHistoryList.tsx",
-          "frontend/src/components/running/RunHistoryList.tsx"
-        ]
-      },
-      {
-        "id": "REQ-36",
-        "summary": "Expose a simple in-app control to enable/disable “Save for offline use” behavior on the device, and provide English helper text describing what is saved and that sync happens when back online.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/offline/useOfflinePreference.ts",
-          "frontend/src/components/settings/SettingsForm.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/offline/OfflineSyncProvider.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/offline/useOfflinePreference.ts",
-          "frontend/src/components/settings/SettingsForm.tsx",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/offline/OfflineSyncProvider.tsx"
-        ]
+        "id": "REQ-1",
+        "summary": "Implement a public backend query method `isCallerAdmin() : async Bool` in `backend/main.mo` that returns whether the `caller` is an admin according to the existing access-control state (use `AccessControl.isAdmin(accessControlState, caller)`), so the frontend `useIsCallerAdmin()` hook can successfully determine admin status.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
     "feature_evidence.json",
-    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/components/history/HistoryView.tsx",
-    "frontend/src/components/intake/QuickAddIntake.tsx",
-    "frontend/src/components/intake/TodayProgress.tsx",
-    "frontend/src/components/offline/OfflineStaleNotice.tsx",
-    "frontend/src/components/running/RunHistoryList.tsx",
-    "frontend/src/components/running/RunLogForm.tsx",
-    "frontend/src/components/settings/SettingsForm.tsx",
-    "frontend/src/components/sleep/SleepHistoryList.tsx",
-    "frontend/src/components/sleep/SleepLogForm.tsx",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/offline/OfflineSyncProvider.tsx",
-    "frontend/src/offline/offlineQueue.ts",
-    "frontend/src/offline/offlineStorage.ts",
-    "frontend/src/offline/useOfflinePreference.ts",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

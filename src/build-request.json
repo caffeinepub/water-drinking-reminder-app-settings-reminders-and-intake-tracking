@@ -1,89 +1,43 @@
 {
   "kind": "build_request",
-  "title": "Add offline saved content mode (queue + cache user data for offline use)",
+  "title": "Restore Admin Dashboard visibility by adding missing backend isCallerAdmin query",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-34",
-      "text": "Add offline-first persistence for user-generated tracking actions so users can continue using the app while offline: when the device is offline, queue hydration intake logs, sleep logs, running logs, and settings updates locally and automatically sync them to the backend when connectivity is restored.",
-      "target": "frontend",
+      "id": "REQ-1",
+      "text": "Implement a public backend query method `isCallerAdmin() : async Bool` in `backend/main.mo` that returns whether the `caller` is an admin according to the existing access-control state (use `AccessControl.isAdmin(accessControlState, caller)`), so the frontend `useIsCallerAdmin()` hook can successfully determine admin status.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-7",
+          "msg-6"
         ],
         "quotes": [
-          "Yes save"
+          "Fix it",
+          "The Admin Dashboard is still missing because the backend does **not** expose an `isCallerAdmin` function. The frontend calls `actor.isCallerAdmin()`, but this method does not exist in your Motoko canister, so the check always fails and the Admin tab stays hidden."
         ]
       },
       "acceptanceCriteria": [
-        "When the browser is offline, submitting any of the following actions does not error and instead saves locally: addDailyIntake, addSleepLog, logRun, updateUserSettings.",
-        "Queued offline actions are persisted across page reloads (e.g., via localStorage) until successfully synced.",
-        "When the browser returns online, queued actions are replayed automatically in the original order and removed from the queue only after backend success.",
-        "If a queued action fails to sync (backend error), the UI surfaces a non-blocking English message explaining sync failed and keeps the item queued for a later retry.",
-        "After sync completes, relevant React Query caches are refreshed so Today/History/Rewards reflect server state."
-      ]
-    },
-    {
-      "id": "REQ-35",
-      "text": "Cache the last successfully fetched user data locally so the app can display meaningful read-only content while offline, including today’s totals and recent history for hydration, sleep, and running.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Yes save"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When online, successful fetches for today’s values and history lists store a copy locally (per signed-in principal).",
-        "When offline, the app displays the last cached values for today’s progress and history views (hydration/sleep/running) instead of showing only loading/errors.",
-        "The UI clearly indicates the data may be stale while offline using English copy (e.g., “Showing saved data from your last connection.”).",
-        "Offline read-only rendering does not require any backend calls and does not crash if no cached data exists (falls back to existing empty/loading states)."
-      ]
-    },
-    {
-      "id": "REQ-36",
-      "text": "Expose a simple in-app control to enable/disable “Save for offline use” behavior on the device, and provide English helper text describing what is saved and that sync happens when back online.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Yes save"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A toggle labeled in English (e.g., “Save for offline use”) is available in an existing settings surface.",
-        "When disabled, the app does not queue new offline actions and does not write new offline caches (existing queued items/caches may be left intact unless the user explicitly clears them).",
-        "When enabled, behavior matches REQ-34 and REQ-35.",
-        "User preference is persisted locally on the device and restored on reload."
+        "The canister exposes a callable `isCallerAdmin` query in the generated interface so that `actor.isCallerAdmin()` from `frontend/src/hooks/useQueries.ts` resolves successfully.",
+        "When signed in as a non-admin, `isCallerAdmin()` returns `false` (and does not trap).",
+        "When signed in as an admin/owner principal (as defined by the existing authorization mixin / access control), `isCallerAdmin()` returns `true`.",
+        "With the backend method added, the existing frontend logic in `frontend/src/App.tsx` shows the \"Admin\" tab when `isAdmin === true`, and the `AdminDashboard` view no longer fails due to a missing canister method."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (shadcn components are read-only).",
-    "Do not modify frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (immutable paths).",
-    "Keep all user-facing text in English."
+    "Backend must remain a single Motoko actor (all logic in `backend/main.mo`).",
+    "Do not modify files under `frontend/src/components/ui` or other frontend immutable paths listed in SYSTEM_CONTEXT.",
+    "Use English for any user-facing text (no new user-facing text is required for this fix)."
   ],
   "nonGoals": [
-    "Implementing real-time sync or WebSocket-based updates.",
-    "Providing cross-device offline queue synchronization (offline data is device-local only).",
-    "Adding a new backend storage layer or changing Motoko canister state specifically for offline support."
+    "Do not redesign the Admin Dashboard UI.",
+    "Do not change the existing admin authorization model/role assignments; only expose the missing admin-status query.",
+    "Do not add new authentication providers beyond Internet Identity.",
+    "Do not implement new analytics endpoints; only fix the missing `isCallerAdmin` method required by the existing frontend."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

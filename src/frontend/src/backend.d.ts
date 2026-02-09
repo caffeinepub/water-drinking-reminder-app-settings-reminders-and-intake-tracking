@@ -25,11 +25,27 @@ export interface CustomReminderDefinition {
     enabled: boolean;
     lastSent: bigint;
 }
+export interface AnalyticsMetrics {
+    weeklyActiveUsers: bigint;
+    totalUniqueUsers: bigint;
+    dailyActiveUsers: bigint;
+    totalSleepEvents: bigint;
+    totalHydrationEvents: bigint;
+    totalRunningEvents: bigint;
+}
 export interface UserRewards {
     streak: bigint;
     badges: Array<RewardType>;
     lastUpdated: bigint;
     completedGoals: bigint;
+}
+export interface UserAnalyticsEntry {
+    runningLogs: bigint;
+    principal: Principal;
+    issuedDay: bigint;
+    hydrationLogs: bigint;
+    sleepLogs: bigint;
+    profileName: string;
 }
 export interface HydrationLog {
     date: bigint;
@@ -64,6 +80,8 @@ export interface backendInterface {
      */
     addSleepLog(hours: number): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    getAllUserAnalytics(): Promise<Array<UserAnalyticsEntry>>;
+    getAnalyticsMetrics(): Promise<AnalyticsMetrics>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getIntakeHistory(): Promise<Array<HydrationLog>>;

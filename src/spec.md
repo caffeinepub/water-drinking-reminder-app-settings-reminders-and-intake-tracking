@@ -1,12 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Let users keep using the app offline by saving actions and showing previously saved data, then syncing automatically when back online.
+**Goal:** Restore Admin Dashboard visibility by exposing a backend `isCallerAdmin()` query so the frontend can correctly detect admin status.
 
 **Planned changes:**
-- Add an offline queue for user-generated actions (hydration intake logs, sleep logs, running logs, settings updates) that persists across reloads and replays in order when connectivity returns.
-- Add local caching of last successfully fetched “today” values and recent history (hydration/sleep/running) so views can render read-only content while offline.
-- Add a “Save for offline use” toggle in an existing settings surface, persist the preference locally, and gate offline queueing/caching behavior based on it.
-- Show clear English UI messaging for offline/stale data and for non-blocking sync failures (keep failed items queued for retry), and refresh relevant React Query caches after successful sync.
+- Add a public query method `isCallerAdmin() : async Bool` in `backend/main.mo`.
+- Implement the method to return `AccessControl.isAdmin(accessControlState, caller)` using the existing access-control state.
 
-**User-visible outcome:** Users can log hydration, sleep, runs, and settings changes while offline without errors; the app shows saved totals/history offline with a stale-data notice; and queued changes automatically sync (with retry messaging on failure) when the device goes back online.
+**User-visible outcome:** When signed in, admins see the “Admin” tab and can open the Admin Dashboard; non-admin users do not see the Admin tab, and the app no longer fails due to a missing canister method.

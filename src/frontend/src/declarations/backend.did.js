@@ -13,6 +13,22 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const UserAnalyticsEntry = IDL.Record({
+  'runningLogs' : IDL.Nat,
+  'principal' : IDL.Principal,
+  'issuedDay' : IDL.Int,
+  'hydrationLogs' : IDL.Nat,
+  'sleepLogs' : IDL.Nat,
+  'profileName' : IDL.Text,
+});
+export const AnalyticsMetrics = IDL.Record({
+  'weeklyActiveUsers' : IDL.Nat,
+  'totalUniqueUsers' : IDL.Nat,
+  'dailyActiveUsers' : IDL.Nat,
+  'totalSleepEvents' : IDL.Nat,
+  'totalHydrationEvents' : IDL.Nat,
+  'totalRunningEvents' : IDL.Nat,
+});
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const HydrationLog = IDL.Record({
   'date' : IDL.Int,
@@ -60,6 +76,8 @@ export const idlService = IDL.Service({
   'addDailyIntake' : IDL.Func([IDL.Float64], [], []),
   'addSleepLog' : IDL.Func([IDL.Float64], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'getAllUserAnalytics' : IDL.Func([], [IDL.Vec(UserAnalyticsEntry)], []),
+  'getAnalyticsMetrics' : IDL.Func([], [AnalyticsMetrics], []),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getIntakeHistory' : IDL.Func([], [IDL.Vec(HydrationLog)], ['query']),
@@ -99,6 +117,22 @@ export const idlFactory = ({ IDL }) => {
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
+  });
+  const UserAnalyticsEntry = IDL.Record({
+    'runningLogs' : IDL.Nat,
+    'principal' : IDL.Principal,
+    'issuedDay' : IDL.Int,
+    'hydrationLogs' : IDL.Nat,
+    'sleepLogs' : IDL.Nat,
+    'profileName' : IDL.Text,
+  });
+  const AnalyticsMetrics = IDL.Record({
+    'weeklyActiveUsers' : IDL.Nat,
+    'totalUniqueUsers' : IDL.Nat,
+    'dailyActiveUsers' : IDL.Nat,
+    'totalSleepEvents' : IDL.Nat,
+    'totalHydrationEvents' : IDL.Nat,
+    'totalRunningEvents' : IDL.Nat,
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const HydrationLog = IDL.Record({
@@ -147,6 +181,8 @@ export const idlFactory = ({ IDL }) => {
     'addDailyIntake' : IDL.Func([IDL.Float64], [], []),
     'addSleepLog' : IDL.Func([IDL.Float64], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'getAllUserAnalytics' : IDL.Func([], [IDL.Vec(UserAnalyticsEntry)], []),
+    'getAnalyticsMetrics' : IDL.Func([], [AnalyticsMetrics], []),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getIntakeHistory' : IDL.Func([], [IDL.Vec(HydrationLog)], ['query']),

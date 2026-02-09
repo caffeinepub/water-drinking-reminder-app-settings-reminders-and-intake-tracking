@@ -1,8 +1,6 @@
 import Map "mo:core/Map";
-import Int "mo:core/Int";
 import List "mo:core/List";
 import Time "mo:core/Time";
-import Nat "mo:core/Nat";
 import Text "mo:core/Text";
 import Array "mo:core/Array";
 import Float "mo:core/Float";
@@ -10,9 +8,9 @@ import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
+import Int "mo:core/Int";
+import Nat "mo:core/Nat";
 import MixinAuthorization "authorization/MixinAuthorization";
-
-
 
 actor {
   // Access Control
@@ -81,6 +79,31 @@ actor {
     lastUpdated : Int; // Day number of last streak update (not nanoseconds)
   };
 
+  public type UserAnalytics = {
+    totalHydrationLogs : Nat;
+    totalRunningLogs : Nat;
+    totalSleepLogs : Nat;
+    lastActiveDay : Int; // Day in nanoseconds when last active
+  };
+
+  public type AnalyticsMetrics = {
+    totalUniqueUsers : Nat;
+    dailyActiveUsers : Nat;
+    weeklyActiveUsers : Nat;
+    totalHydrationEvents : Nat;
+    totalRunningEvents : Nat;
+    totalSleepEvents : Nat;
+  };
+
+  public type UserAnalyticsEntry = {
+    principal : Principal;
+    profileName : Text;
+    issuedDay : Int;
+    hydrationLogs : Nat;
+    runningLogs : Nat;
+    sleepLogs : Nat;
+  };
+
   // Storage Maps
   var userRewards = Map.empty<Principal, UserRewards>();
   let userProfiles = Map.empty<Principal, UserProfile>();
@@ -89,6 +112,7 @@ actor {
   let userIntakeHistory = Map.empty<Principal, List.List<HydrationLog>>();
   let customReminders = Map.empty<Principal, Map.Map<Text, CustomReminderDefinition>>();
   let sleepLogs = Map.empty<Principal, List.List<SleepLog>>();
+  var userAnalytics = Map.empty<Principal, UserAnalytics>();
 
   ///////////////////////////////////////////////////////////////////////////////
   // User Profile Management
@@ -181,6 +205,18 @@ actor {
     };
 
     sleepLogs.add(caller, userSleepLogs);
+
+    // Update analytics
+    let currentAnalytics = switch (userAnalytics.get(caller)) {
+      case (?analytics) { analytics };
+      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0; lastActiveDay = today } };
+    };
+    let updatedAnalytics = {
+      currentAnalytics with
+      totalSleepLogs = currentAnalytics.totalSleepLogs + 1;
+      lastActiveDay = today;
+    };
+    userAnalytics.add(caller, updatedAnalytics);
   };
 
   public query ({ caller }) func getTodaysSleep() : async Float {
@@ -279,6 +315,18 @@ actor {
 
     userIntakeHistory.add(caller, intakeHistory);
     updateStreak(caller, today);
+
+    // Update analytics
+    let currentAnalytics = switch (userAnalytics.get(caller)) {
+      case (?analytics) { analytics };
+      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0; lastActiveDay = today } };
+    };
+    let updatedAnalytics = {
+      currentAnalytics with
+      totalHydrationLogs = currentAnalytics.totalHydrationLogs + 1;
+      lastActiveDay = today;
+    };
+    userAnalytics.add(caller, updatedAnalytics);
   };
 
   public query ({ caller }) func getTodaysIntake() : async Float {
@@ -345,6 +393,19 @@ actor {
     });
 
     runningLogs.add(caller, currentLogs);
+
+    // Update analytics
+    let todayDay = Time.now() / 86400000000000;
+    let currentAnalytics = switch (userAnalytics.get(caller)) {
+      case (?analytics) { analytics };
+      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0; lastActiveDay = todayDay } };
+    };
+    let updatedAnalytics = {
+      currentAnalytics with
+      totalRunningLogs = currentAnalytics.totalRunningLogs + 1;
+      lastActiveDay = todayDay;
+    };
+    userAnalytics.add(caller, updatedAnalytics);
   };
 
   public query ({ caller }) func getRunningHistory() : async [RunningLog] {
@@ -476,7 +537,7 @@ actor {
   };
 
   ////////////////////////////////////////////////////////////////////////
-  // Streak calculation & completion tracking                             
+  // Streak calculation & completion tracking
   ////////////////////////////////////////////////////////////////////////
 
   func updateStreak(caller : Principal, today : Int) {
@@ -561,5 +622,79 @@ actor {
       currentReward.badges,
       today,
     );
+  };
+
+  ///////////////////////////////////////////////
+  // Analytics Tracking
+  ///////////////////////////////////////////////
+
+  public shared ({ caller }) func getAnalyticsMetrics() : async AnalyticsMetrics {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can access analytics");
+    };
+
+    let now = Time.now() / 86400000000000; // Current day
+
+    let allValues = userAnalytics.values().toArray();
+
+    let dailyActiveUsers = allValues.filter(
+      func(user) {
+        Int.abs(user.lastActiveDay - now) <= 1;
+      }
+    ).size();
+
+    let weeklyActiveUsers = allValues.filter(
+      func(user) {
+        Int.abs(user.lastActiveDay - now) <= 7;
+      }
+    ).size();
+
+    var totalHydration = 0;
+    var totalRunning = 0;
+    var totalSleep = 0;
+
+    allValues.forEach(
+      func(user) {
+        totalHydration += user.totalHydrationLogs;
+        totalRunning += user.totalRunningLogs;
+        totalSleep += user.totalSleepLogs;
+      }
+    );
+
+    {
+      totalUniqueUsers = userAnalytics.size();
+      dailyActiveUsers;
+      weeklyActiveUsers;
+      totalHydrationEvents = totalHydration;
+      totalRunningEvents = totalRunning;
+      totalSleepEvents = totalSleep;
+    };
+  };
+
+  public shared ({ caller }) func getAllUserAnalytics() : async [UserAnalyticsEntry] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can access analytics");
+    };
+
+    let entries = userAnalytics.toArray();
+
+    let userAnalyticsEntries = entries.map(
+      func((principal, analytics)) {
+        {
+          principal;
+          profileName = switch (userProfiles.get(principal)) {
+            case (?profile) { profile.name };
+            case (null) {
+              "Unknown";
+            };
+          };
+          issuedDay = analytics.lastActiveDay;
+          hydrationLogs = analytics.totalHydrationLogs;
+          runningLogs = analytics.totalRunningLogs;
+          sleepLogs = analytics.totalSleepLogs;
+        };
+      }
+    );
+    userAnalyticsEntries;
   };
 };
