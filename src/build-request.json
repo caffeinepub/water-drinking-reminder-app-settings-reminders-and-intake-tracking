@@ -1,0 +1,172 @@
+{
+  "kind": "build_request",
+  "title": "Water Drinking Reminder App (settings, reminders, and intake tracking)",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Implement Internet Identity sign-in so reminders, settings, and intake history are stored per user Principal.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "I want a water drinking reminder app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "User can sign in and sign out using Internet Identity.",
+        "After sign-in, the app shows the signed-in state and loads user-specific data.",
+        "Data shown after reload remains tied to the same Principal."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Create backend data models and APIs to store and retrieve a user’s hydration settings and intake log.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "I want a water drinking reminder app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend stores settings per Principal: dailyGoalMl, reminderIntervalMinutes, activeHoursStart, activeHoursEnd, defaultCupMl (or equivalent).",
+        "Backend stores intake events per Principal with timestamp (and amount).",
+        "APIs exist to: getSettings, upsertSettings, addIntake(amountMl), listIntake(range), and getTodayProgress.",
+        "Unauthenticated calls that require a Principal are rejected with a clear error."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Build the main UI to configure hydration settings: daily water goal, reminder interval, active hours window, and default cup size.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "I want a water drinking reminder app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Settings form includes fields for daily goal (ml), reminder interval (minutes), active hours start/end (local time), and default cup size (ml).",
+        "Saving settings persists to backend and reload reflects saved values.",
+        "Validation prevents nonsensical inputs (e.g., negative values, interval too small/large, invalid time window)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Add an in-app reminder scheduler that triggers during the configured active hours and uses browser Notification API (local notifications) when permission is granted; otherwise show an in-app toast/banner reminder.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "I want a water drinking reminder app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "App requests Notification permission via an explicit user action (e.g., “Enable notifications” button).",
+        "When permission is granted, reminders produce a browser notification at the configured interval, only within active hours.",
+        "When permission is denied/unavailable, reminders still appear as an in-app visual reminder.",
+        "User can start/pause reminders from the UI, and state is clearly indicated."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Implement intake logging UX: quick-add buttons based on default cup size (e.g., +1 cup, +250ml, custom amount) and display today’s progress toward the daily goal.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "I want a water drinking reminder app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "User can add an intake entry with one click using a quick-add button, and optionally add a custom amount.",
+        "Each intake addition is persisted to the backend and immediately reflected in the UI progress.",
+        "UI shows today’s total consumed (ml) and remaining-to-goal (or over-goal) indicator.",
+        "If backend call fails, UI shows an error and does not incorrectly increment totals."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Provide a history/stats view for recent intake (at minimum: today and the last 7 days) with a simple chart or list breakdown.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "I want a water drinking reminder app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "User can view daily totals for at least the last 7 days.",
+        "History is fetched from backend and is user-specific.",
+        "UI includes a clear empty state when no intake exists."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Apply a coherent visual theme (colors, typography, spacing, layout) appropriate for a calm hydration/health app and use it consistently across all pages and components (avoid blue/purple as the primary palette).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "I want a water drinking reminder app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "App has a consistent theme across settings, reminders, progress, and history views.",
+        "Theme uses a calm, hydration-adjacent palette that is not primarily blue/purple.",
+        "UI is responsive and readable on mobile widths."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Add generated static image assets to the frontend and use them in the UI (e.g., app header/empty states) by serving them from frontend/public/assets/generated (not via backend).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "I want a water drinking reminder app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Generated images are present under frontend/public/assets/generated with the specified filenames.",
+        "UI references these images via static paths and displays them appropriately.",
+        "No backend endpoints are created to serve images."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
+    "Do not edit files under frontend/src/components/ui or other immutable paths; compose them instead.",
+    "Use English for all user-facing text."
+  ],
+  "nonGoals": [
+    "Push notifications (OS-level) or background notifications when the app is closed.",
+    "Integrations with external wearable/health platforms (Apple Health, Google Fit, Fitbit, etc.).",
+    "Multi-canister backend architecture or external databases."
+  ],
+  "imageRequirements": {
+    "required": [
+      "Minimal line-art water glass icon with soft green accents (app-icon.dim_512x512.png)",
+      "Calm abstract hydration-themed header illustration with warm neutrals and green highlights (header-illustration.dim_1600x400.png)",
+      "Simple empty-state illustration showing a water bottle and small sparkles, warm neutral background (empty-state.dim_800x600.png)"
+    ],
+    "edits": []
+  }
+}

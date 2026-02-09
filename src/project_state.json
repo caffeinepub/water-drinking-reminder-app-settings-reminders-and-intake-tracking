@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Build a water drinking reminder app.",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Minimal line-art water glass icon with soft green accents (app-icon.dim_512x512.png)\n- Calm abstract hydration-themed header illustration with warm neutrals and green highlights (header-illustration.dim_1600x400.png)\n- Simple empty-state illustration showing a water bottle and small sparkles, warm neutral background (empty-state.dim_800x600.png)",
+  "existing_features": [
+    {
+      "id": "feature-implement-internet-identity-sign-in-so-reminders-settings-and-intake-history-are-stored-per-user-principal",
+      "title": "Implement Internet Identity sign-in so reminders, settings, and intake history are stored per user Principal.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-the-main-ui-to-configure-hydration-settings-daily-water-goal-reminder-interval-active-hours-window-and-default-cup-size",
+      "title": "Build the main UI to configure hydration settings: daily water goal, reminder interval, active hours window, and default cup size.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-in-app-reminder-scheduler-that-triggers-during-the-configured-active-hours-and-uses-browser-notification-api-local-notifications-when-permission-is-granted-otherwise-show-an-in-app-toast-banner-reminder",
+      "title": "Add an in-app reminder scheduler that triggers during the configured active hours and uses browser Notification API (local notifications) when permission is granted; otherwise show an in-app toast/banner reminder.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-intake-logging-ux-quick-add-buttons-based-on-default-cup-size-e-g-1-cup-250ml-custom-amount-and-display-today-s-progress-toward-the-daily-goal",
+      "title": "Implement intake logging UX: quick-add buttons based on default cup size (e.g., +1 cup, +250ml, custom amount) and display today’s progress toward the daily goal.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-a-history-stats-view-for-recent-intake-at-minimum-today-and-the-last-7-days-with-a-simple-chart-or-list-breakdown",
+      "title": "Provide a history/stats view for recent intake (at minimum: today and the last 7 days) with a simple chart or list breakdown.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-coherent-visual-theme-colors-typography-spacing-layout-appropriate-for-a-calm-hydration-health-app-and-use-it-consistently-across-all-pages-and-components-avoid-blue-purple-as-the-primary-palette",
+      "title": "Apply a coherent visual theme (colors, typography, spacing, layout) appropriate for a calm hydration/health app and use it consistently across all pages and components (avoid blue/purple as the primary palette).",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-generated-static-image-assets-to-the-frontend-and-use-them-in-the-ui-e-g-app-header-empty-states-by-serving-them-from-frontend-public-assets-generated-not-via-backend",
+      "title": "Add generated static image assets to the frontend and use them in the UI (e.g., app header/empty states) by serving them from frontend/public/assets/generated (not via backend).",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Create a water drinking reminder app",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Create backend data models and APIs to store and retrieve a user’s hydration settings and intake log.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Water Drinking Reminder App (settings, reminders, and intake tracking)",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

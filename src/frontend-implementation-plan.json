@@ -1,0 +1,236 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Water Drinking Reminder App (frontend: auth, settings, reminders, tracking, history, theme, images)",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Add Internet Identity sign-in/out UX and gate hydration data to the signed-in Principal, including per-user profile setup and cache clearing on logout.",
+      "acceptanceCriteria": [
+        "User can sign in and sign out using Internet Identity.",
+        "After sign-in, the app shows the signed-in state and loads user-specific data.",
+        "Data shown after reload remains tied to the same Principal."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "create",
+          "description": "Create the main app shell that uses the selected authorization component guidance (Internet Identity + per-user profile setup) to: (1) show a signed-in/signed-out header state, (2) block hydration UI until authenticated, and (3) render a first-login Profile Setup flow using backend getCallerUserProfile/saveCallerUserProfile. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/LoginButton.tsx",
+          "operation": "create",
+          "description": "Create a Login/Logout button composed around useInternetIdentity; on logout, clear cached app queries/data (react-query) to avoid leaking prior Principal data. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/ProfileSetupModal.tsx",
+          "operation": "create",
+          "description": "Add a first-login modal that prompts for a display name (English text), saves via saveCallerUserProfile, and avoids modal flash by following the selected authorization component's loading/isFetched gating pattern. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useGetCallerUserProfile.ts",
+          "operation": "create",
+          "description": "Add a react-query hook that depends on useActor and fetches getCallerUserProfile with correct loading/isFetched semantics to prevent UI flashes between anonymous/authenticated actor creation. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useAuthGate.tsx",
+          "operation": "create",
+          "description": "Create an AuthGate wrapper that requires an authenticated identity before rendering any hydration settings/history/progress UI; render a friendly signed-out screen and login CTA when not authenticated. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/main.tsx",
+          "operation": "modify",
+          "description": "Ensure App is wired correctly and that the app tree supports authenticated data flows (InternetIdentityProvider already present); adjust imports if needed for the new frontend/src/App.tsx and authentication components."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Build a settings UI for daily goal, reminder interval, active hours, and default cup size with validation and persistence.",
+      "acceptanceCriteria": [
+        "Settings form includes fields for daily goal (ml), reminder interval (minutes), active hours start/end (local time), and default cup size (ml).",
+        "Saving settings persists to backend and reload reflects saved values.",
+        "Validation prevents nonsensical inputs (e.g., negative values, interval too small/large, invalid time window)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/settings/SettingsForm.tsx",
+          "operation": "create",
+          "description": "Create a settings form component (daily goal ml, reminder interval minutes, active hours start/end, default cup ml) with client-side validation and a Save action that calls backend capabilities via useActor (getSettings/upsertSettings or equivalent when available) and then refreshes cached settings."
+        },
+        {
+          "path": "frontend/src/hooks/useUserSettings.ts",
+          "operation": "create",
+          "description": "Add react-query hooks for loading/saving hydration settings via useActor; include error handling and query invalidation so reload reflects saved values."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire SettingsForm into the authenticated app area (no orphan components) and ensure it only renders after AuthGate passes."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Implement an in-app reminder scheduler that runs within active hours and uses browser Notifications when permitted, otherwise falls back to an in-app reminder banner/toast, with start/pause controls.",
+      "acceptanceCriteria": [
+        "App requests Notification permission via an explicit user action (e.g., “Enable notifications” button).",
+        "When permission is granted, reminders produce a browser notification at the configured interval, only within active hours.",
+        "When permission is denied/unavailable, reminders still appear as an in-app visual reminder.",
+        "User can start/pause reminders from the UI, and state is clearly indicated."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useReminderScheduler.ts",
+          "operation": "create",
+          "description": "Implement a scheduler hook that reads the saved settings (interval + active hours) and triggers reminders only within the local-time active window; support start/pause state persisted in-memory for the session and expose current running state to the UI."
+        },
+        {
+          "path": "frontend/src/components/reminders/ReminderControls.tsx",
+          "operation": "create",
+          "description": "Create UI controls: Enable notifications (explicit permission request), Start/Pause reminders, and a clear status indicator (permission state + running/paused)."
+        },
+        {
+          "path": "frontend/src/components/reminders/InAppReminderBanner.tsx",
+          "operation": "create",
+          "description": "Create a lightweight in-app reminder banner/toast UI used when Notifications are denied/unavailable; ensure it is accessible and dismissible."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire ReminderControls and InAppReminderBanner into the authenticated app area, ensuring reminder scheduling is not started implicitly without user interaction for permission prompts."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Add intake logging UX with quick-add options, custom amount, and today’s progress display with correct optimistic/error behavior.",
+      "acceptanceCriteria": [
+        "User can add an intake entry with one click using a quick-add button, and optionally add a custom amount.",
+        "Each intake addition is persisted to the backend and immediately reflected in the UI progress.",
+        "UI shows today’s total consumed (ml) and remaining-to-goal (or over-goal) indicator.",
+        "If backend call fails, UI shows an error and does not incorrectly increment totals."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/intake/QuickAddIntake.tsx",
+          "operation": "create",
+          "description": "Create quick-add buttons derived from default cup size (e.g., +1 cup) plus a few common ml options and a custom amount input; submit calls backend addIntake/addDailyIntake via useActor and only updates UI totals after success (or roll back on error)."
+        },
+        {
+          "path": "frontend/src/components/intake/TodayProgress.tsx",
+          "operation": "create",
+          "description": "Add a progress widget showing today's consumed ml, remaining/over-goal indicator, and a simple progress bar based on daily goal from settings."
+        },
+        {
+          "path": "frontend/src/hooks/useTodayIntake.ts",
+          "operation": "create",
+          "description": "Add react-query hooks to fetch today progress (getTodayProgress/getTodaysIntake or equivalent) and to add intake with robust error handling and query invalidation on success."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire QuickAddIntake and TodayProgress into the authenticated app area near reminders/settings for daily use."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Provide a recent history/stats view (today + last 7 days) with a simple list/chart and an empty state.",
+      "acceptanceCriteria": [
+        "User can view daily totals for at least the last 7 days.",
+        "History is fetched from backend and is user-specific.",
+        "UI includes a clear empty state when no intake exists."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/history/HistoryView.tsx",
+          "operation": "create",
+          "description": "Create a history view that shows at least the last 7 daily totals (including today) using a simple list and/or compact bar visualization; include loading, error, and empty states."
+        },
+        {
+          "path": "frontend/src/hooks/useIntakeHistory.ts",
+          "operation": "create",
+          "description": "Add a react-query hook that fetches user-specific intake history (listIntake(range)/getIntakeHistory or equivalent) via useActor and normalizes it for a last-7-days display."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire HistoryView into the authenticated app navigation (e.g., tab/segmented control section) so it is reachable and not orphaned."
+        },
+        {
+          "path": "frontend/src/components/history/EmptyState.tsx",
+          "operation": "create",
+          "description": "Add a reusable empty-state component used by history when no intake exists; it should display the generated empty-state illustration asset. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Apply a calm, cohesive theme (not primarily blue/purple) with responsive typography/spacing across the app.",
+      "acceptanceCriteria": [
+        "App has a consistent theme across settings, reminders, progress, and history views.",
+        "Theme uses a calm, hydration-adjacent palette that is not primarily blue/purple.",
+        "UI is responsive and readable on mobile widths."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "create",
+          "description": "Create global styles and CSS variables used by Tailwind/shadcn tokens to implement a warm neutral + soft green primary palette (avoid blue/purple as primary), plus base typography and spacing defaults."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Adjust/extend theme token usage as needed to ensure components consistently use the new primary/secondary colors and responsive container settings remain appropriate for mobile widths."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Apply consistent layout structure (header, content sections, spacing) and ensure responsive behavior across settings/reminders/progress/history views."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Add required generated static image assets under frontend/public/assets/generated and reference them in the UI (no backend image serving).",
+      "acceptanceCriteria": [
+        "Generated images are present under frontend/public/assets/generated with the specified filenames.",
+        "UI references these images via static paths and displays them appropriately.",
+        "No backend endpoints are created to serve images."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/app-icon.dim_512x512.png",
+          "operation": "create",
+          "description": "Add the generated static asset file: frontend/public/assets/generated/app-icon.dim_512x512.png."
+        },
+        {
+          "path": "frontend/public/assets/generated/header-illustration.dim_1600x400.png",
+          "operation": "create",
+          "description": "Add the generated static asset file: frontend/public/assets/generated/header-illustration.dim_1600x400.png."
+        },
+        {
+          "path": "frontend/public/assets/generated/empty-state.dim_800x600.png",
+          "operation": "create",
+          "description": "Add the generated static asset file: frontend/public/assets/generated/empty-state.dim_800x600.png."
+        },
+        {
+          "path": "frontend/src/components/layout/AppHeader.tsx",
+          "operation": "create",
+          "description": "Create an app header that displays the generated header illustration (frontend/public/assets/generated/header-illustration.dim_1600x400.png) and app icon (frontend/public/assets/generated/app-icon.dim_512x512.png) as static assets, and shows auth state (name when available). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/history/EmptyState.tsx",
+          "operation": "modify",
+          "description": "Wire the empty-state illustration (frontend/public/assets/generated/empty-state.dim_800x600.png) into the empty-state UI so it renders when no intake exists."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire AppHeader into the top of the app layout and ensure images are displayed via static public assets (no backend involvement)."
+        }
+      ]
+    }
+  ]
+}

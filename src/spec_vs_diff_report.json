@@ -1,0 +1,97 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-09T04:13:00.588Z",
+  "summary": "Diff implements an Internet Identity-based login flow and a hydration tracker UI with progress, quick-add intake, history list, and a reminder system using the browser Notification API plus an in-app banner. However, several BuildRequest requirements are only partially met: the backend data model/APIs do not match the specified settings fields and API surface (range-based listing, today progress), settings UI is missing reminder interval and active hours, reminder scheduling does not use backend settings or active-hours constraints, and the required generated static image assets are not evidenced as added. The diff also introduces unrequested user profile and access-control/admin-token mechanisms.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "Backend stores settings per Principal including dailyGoalMl, reminderIntervalMinutes, activeHoursStart, activeHoursEnd, defaultCupMl; and exposes APIs getSettings, upsertSettings, addIntake(amountMl), listIntake(range), getTodayProgress.",
+      "reason": "Backend settings type and update API only include dailyGoal and cupSize; reminder interval and active hours are not present. Backend API names/signatures differ (e.g., updateUserSettings, addDailyIntake), and the required listIntake(range) / getTodayProgress endpoints are not evidenced. Frontend calls getTodaysIntake/getIntakeHistory, which are not shown in backend snippet.",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/components/settings/SettingsForm.tsx"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Settings UI includes daily goal (ml), reminder interval (minutes), active hours start/end (local time), and default cup size (ml), with validation.",
+      "reason": "Settings form only provides Daily Water Goal and Default Cup Size; there are no fields for reminder interval or active hours start/end.",
+      "evidence": [
+        "frontend/src/components/settings/SettingsForm.tsx"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Reminder scheduler triggers at configured interval only within configured active hours, using Notification API if granted, otherwise in-app reminder; user can start/pause and permission is requested via explicit action.",
+      "reason": "Permission request and start/pause controls exist, but scheduling reads interval from localStorage (hydration_reminder_interval) and does not reference backend/user settings or enforce an active-hours window. Active hours are not represented in settings UI or shown in scheduler logic.",
+      "evidence": [
+        "frontend/src/hooks/useReminderScheduler.ts",
+        "frontend/src/components/reminders/ReminderControls.tsx",
+        "frontend/src/components/reminders/InAppReminderBanner.tsx",
+        "frontend/src/components/settings/SettingsForm.tsx"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "requirement": "Add generated static image assets under frontend/public/assets/generated with specified filenames and reference them from UI (no backend endpoints for images).",
+      "reason": "UI references /assets/generated/app-icon.dim_512x512.png for notifications, but the diff does not show any files added under frontend/public/assets/generated, nor usage of the required header illustration and empty-state illustration.",
+      "evidence": [
+        "frontend/src/hooks/useReminderScheduler.ts",
+        "frontend/src/components/history/EmptyState.tsx",
+        "frontend/src/components/layout/AppHeader.tsx"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "User profile setup/management (name, profile modal, profile APIs) beyond hydration settings/intake tracking.",
+      "reason": "BuildRequest focuses on reminders, hydration settings, and intake history per Principal; it does not request a separate user profile feature with name capture and related backend APIs/UI.",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/components/auth/ProfileSetupModal.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/components/layout/AppHeader.tsx",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "description": "Custom access control/admin initialization via secret token parameter (e.g., caffeineAdminToken) and authorization mixins.",
+      "reason": "BuildRequest does not request an admin model, secret URL token initialization, or authorization framework beyond rejecting unauthenticated principal-required calls.",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/hooks/useActor.ts",
+        "frontend/src/utils/urlParams.ts"
+      ]
+    }
+  ],
+  "confidence": 0.78,
+  "changed_files": [
+    "all_files_summary.json",
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/src/App.tsx",
+    "frontend/src/components/auth/LoginButton.tsx",
+    "frontend/src/components/auth/ProfileSetupModal.tsx",
+    "frontend/src/components/history/EmptyState.tsx",
+    "frontend/src/components/history/HistoryView.tsx",
+    "frontend/src/components/intake/QuickAddIntake.tsx",
+    "frontend/src/components/intake/TodayProgress.tsx",
+    "frontend/src/components/layout/AppHeader.tsx",
+    "frontend/src/components/reminders/InAppReminderBanner.tsx",
+    "frontend/src/components/reminders/ReminderControls.tsx",
+    "frontend/src/components/settings/SettingsForm.tsx",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useReminderScheduler.ts",
+    "frontend/src/index.css",
+    "frontend/src/main.tsx",
+    "frontend/src/utils/urlParams.ts",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}
