@@ -1,9 +1,16 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 5,
-  "summary": "Expand the app from a water drinking reminder into a broader health reminders and tracking app (including sleep scheduling, running tracking, and other health reminders/trackers).",
-  "architectural_notes": [],
-  "known_issues": [],
+  "projectStateVersion": 13,
+  "summary": "Expand the health reminders/tracking app with owner-only admin analytics (usage dashboard) and a Gen-Z styled, gamified experience with rewards and more engaging/chill notifications.",
+  "architectural_notes": [
+    "Restrict analytics/usage endpoints to the canister owner (owner Principal) so only the app owner can access global usage data; regular users remain limited to their own data.",
+    "Hide/disable Admin Dashboard UI for non-owner callers in the frontend in addition to backend authorization.",
+    "Ensure rewards/badge unlocking logic supports sleep goals (not just hydration) and is computed deterministically from stored sleep tracking data so unlock state is consistent across sessions/devices."
+  ],
+  "known_issues": [
+    "Sleep badge is not unlocking even after the user completes their sleep goal (badge unlock logic for sleep goals appears broken or missing).",
+    "Build/deployment did not complete (deployment error encountered)."
+  ],
   "isFixRequest": false,
   "existing_features": [
     {
@@ -85,6 +92,94 @@
         "REQ-14"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-update-the-app-s-visual-design-to-a-gen-z-cool-chill-vibes-style-across-all-existing-pages-hydration-reminders-sleep-running-history-settings-without-changing-core-functionality",
+      "title": "Update the app’s visual design to a Gen-Z “cool/chill vibes” style across all existing pages (Hydration, Reminders, Sleep, Running, History, Settings) without changing core functionality.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-lightweight-rewards-gamification-system-for-hydration-tracking-that-users-can-see-in-the-ui-including-at-minimum-daily-goal-completion-celebration-a-hydration-streak-counter-and-at-least-3-unlockable-badges",
+      "title": "Add a lightweight rewards/gamification system for hydration tracking that users can see in the UI, including at minimum: daily goal completion celebration, a hydration streak counter, and at least 3 unlockable badges.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enhance-hydration-logging-feedback-to-feel-more-engaging-and-gen-z-after-logging-water-quick-add-or-custom-show-a-fun-chill-confirmation-message-and-when-appropriate-progress-reward-nudges-e-g-streak-saved-badge-unlocked",
+      "title": "Enhance hydration logging feedback to feel more engaging and “Gen-Z”: after logging water (quick-add or custom), show a fun, chill confirmation message and (when appropriate) progress/reward nudges (e.g., “streak saved”, “badge unlocked”).",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-reminder-notifications-browser-notifications-and-in-app-banner-fallback-more-interesting-cool-and-chill-by-using-varied-copy-templates-and-picking-a-template-at-runtime-keep-messages-in-english-and-avoid-aggressive-or-shaming-language",
+      "title": "Make reminder notifications (browser notifications and in-app banner fallback) more interesting, cool, and chill by using varied copy templates and picking a template at runtime; keep messages in English and avoid aggressive or shaming language.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-and-render-new-static-gen-z-vibe-illustration-assets-stickers-badges-background-accents-from-frontend-public-assets-generated-and-integrate-them-into-the-refreshed-ui-e-g-header-empty-states-rewards-surfaces-without-routing-through-the-backend",
+      "title": "Add and render new static “Gen-Z vibe” illustration assets (stickers/badges/background accents) from frontend/public/assets/generated and integrate them into the refreshed UI (e.g., header/empty states/rewards surfaces) without routing through the backend.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-extend-the-existing-history-tab-currently-water-intake-only-to-also-show-sleep-history-and-running-history-in-the-same-history-area-using-the-existing-sleep-and-running-history-data-already-available-in-the-app",
+      "title": "Extend the existing History tab (currently water intake only) to also show Sleep History and Running History in the same History area, using the existing sleep and running history data already available in the app.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-it-clear-in-the-ui-when-the-sleepyhead-badge-will-unlock-and-why-it-is-locked-unlocked-by-adding-an-explicit-unlock-rule-and-a-live-progress-hint-based-on-today-s-sleep-total",
+      "title": "Make it clear in the UI when the Sleepyhead badge will unlock and why it is locked/unlocked by adding an explicit unlock rule and a live progress hint based on today’s sleep total.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-identify-the-root-cause-of-the-failed-build-deployment-and-apply-the-minimal-code-config-changes-required-so-the-project-builds-and-deploys-successfully-on-the-internet-computer",
+      "title": "Identify the root cause of the failed build/deployment and apply the minimal code/config changes required so the project builds and deploys successfully on the Internet Computer.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-short-developer-facing-troubleshooting-note-in-the-repository-documentation-describing-how-to-reproduce-the-build-deploy-locally-and-what-was-changed-to-prevent-the-previous-deployment-error-from-recurring",
+      "title": "Add a short developer-facing troubleshooting note in the repository documentation describing how to reproduce the build/deploy locally and what was changed to prevent the previous deployment error from recurring.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-new-local-streak-break-reminder-that-notifies-the-user-when-their-current-hydration-streak-is-at-risk-of-breaking-streak-0-and-today-s-goal-is-not-yet-met-near-end-of-day-use-browser-notifications-when-permitted-otherwise-show-the-existing-in-app-reminder-banner",
+      "title": "Implement a new local streak-break reminder that notifies the user when their current hydration streak is at risk of breaking (streak > 0 and today’s goal is not yet met, near end-of-day). Use browser notifications when permitted; otherwise show the existing in-app reminder banner.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-expose-user-controls-in-the-existing-reminders-ui-to-enable-disable-the-streak-break-reminder-and-configure-the-warning-window-timing-e-g-number-of-hours-before-day-end-persist-these-preferences-locally-device-using-localstorage",
+      "title": "Expose user controls in the existing Reminders UI to enable/disable the streak-break reminder and configure the warning window timing (e.g., number of hours before day end). Persist these preferences locally (device) using localStorage.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -141,6 +236,84 @@
       "summary": "Add backend support for additional (non-hydration) health reminders by allowing users to create, update, list, and delete custom reminder definitions stored per caller Principal.",
       "reqIds": [
         "REQ-11"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Add owner-only analytics tracking (unique users, DAU/WAU, event counts) and backend endpoints restricted to the canister owner.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Create an Admin Dashboard UI (visible only to the owner) to view analytics such as total users, DAU/WAU, and usage by feature area.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Update the app’s visual design to a Gen-Z style (cool/chill vibes) to make tracking enjoyable.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Add gamification/rewards for hydration/tracking (e.g., streaks, badges, progress rewards) to encourage daily use.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Enhance notifications to be more interesting, cool, and chill (copy/variations), while still supporting permission-based browser notifications and in-app fallback.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Add sleep history/stats view (e.g., last 7 days) similar to hydration history so users can review sleep tracking over time.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Add running history/stats view (e.g., recent runs + basic aggregates) so users can review running tracking over time.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Define and surface badge unlock criteria/timing for sleep goals (e.g., show when a sleep badge will unlock and why it did/didn’t).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-19",
+      "summary": "Fix the Sleepyhead badge so it unlocks when a user completes the sleep goal, and ensure the rewards state returned by getUserRewards reflects the newly unlocked badge for the signed-in user.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "Add a streak-break reminder (notify users when their streak is at risk of breaking) with Gen-Z chill messaging.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Update backend hydration streak logic so the stored streak represents consecutive days where the user met their daily hydration goal, and automatically resets when a day is missed.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-22",
+      "summary": "Add a conditional Motoko state migration (backend/migration.mo) to safely upgrade existing stored user rewards to the updated streak data structure used by the new consecutive-day streak logic.",
+      "reqIds": [
+        "REQ-26"
       ],
       "status": "pending"
     }

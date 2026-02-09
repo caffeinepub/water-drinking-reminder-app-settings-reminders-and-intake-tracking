@@ -107,6 +107,12 @@ export interface CustomReminderDefinition {
     enabled: boolean;
     lastSent: bigint;
 }
+export interface UserRewards {
+    streak: bigint;
+    badges: Array<RewardType>;
+    lastUpdated: bigint;
+    completedGoals: bigint;
+}
 export interface HydrationLog {
     date: bigint;
     totalIntake: number;
@@ -117,6 +123,12 @@ export interface UserData {
 }
 export interface UserProfile {
     name: string;
+}
+export enum RewardType {
+    sleepyhead = "sleepyhead",
+    plastic_pirate = "plastic_pirate",
+    runner = "runner",
+    hydrator = "hydrator"
 }
 export enum UserRole {
     admin = "admin",
@@ -131,7 +143,7 @@ export interface backendInterface {
     addCustomReminder(name: string, description: string, interval: bigint, enabled: boolean): Promise<void>;
     addDailyIntake(amount: number): Promise<void>;
     /**
-     * / Sleep Tracking Functions
+     * / Sleep Tracking
      */
     addSleepLog(hours: number): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
@@ -144,6 +156,10 @@ export interface backendInterface {
     getTodaysRuns(): Promise<Array<RunningLog>>;
     getTodaysSleep(): Promise<number>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    /**
+     * / Rewards & Gamification
+     */
+    getUserRewards(): Promise<UserRewards>;
     getUserSettings(): Promise<UserData | null>;
     isCallerAdmin(): Promise<boolean>;
     listCustomReminders(): Promise<Array<CustomReminderDefinition>>;
@@ -155,11 +171,11 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     updateCustomReminder(name: string, description: string, interval: bigint, enabled: boolean): Promise<void>;
     /**
-     * / Hydration Tracking Functions
+     * / Hydration Tracking
      */
     updateUserSettings(dailyGoal: number, cupSize: number): Promise<void>;
 }
-import type { UserData as _UserData, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { RewardType as _RewardType, UserData as _UserData, UserProfile as _UserProfile, UserRewards as _UserRewards, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -358,18 +374,32 @@ export class Backend implements backendInterface {
             return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getUserRewards(): Promise<UserRewards> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUserRewards();
+                return from_candid_UserRewards_n6(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUserRewards();
+            return from_candid_UserRewards_n6(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getUserSettings(): Promise<UserData | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserSettings();
-                return from_candid_opt_n6(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n11(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserSettings();
-            return from_candid_opt_n6(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n11(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -471,14 +501,49 @@ export class Backend implements backendInterface {
         }
     }
 }
+function from_candid_RewardType_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RewardType): RewardType {
+    return from_candid_variant_n10(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserRewards_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRewards): UserRewards {
+    return from_candid_record_n7(_uploadFile, _downloadFile, value);
+}
 function from_candid_UserRole_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
     return from_candid_variant_n5(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserData]): UserData | null {
+    return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserData]): UserData | null {
-    return value.length === 0 ? null : value[0];
+function from_candid_record_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    streak: bigint;
+    badges: Array<_RewardType>;
+    lastUpdated: bigint;
+    completedGoals: bigint;
+}): {
+    streak: bigint;
+    badges: Array<RewardType>;
+    lastUpdated: bigint;
+    completedGoals: bigint;
+} {
+    return {
+        streak: value.streak,
+        badges: from_candid_vec_n8(_uploadFile, _downloadFile, value.badges),
+        lastUpdated: value.lastUpdated,
+        completedGoals: value.completedGoals
+    };
+}
+function from_candid_variant_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    sleepyhead: null;
+} | {
+    plastic_pirate: null;
+} | {
+    runner: null;
+} | {
+    hydrator: null;
+}): RewardType {
+    return "sleepyhead" in value ? RewardType.sleepyhead : "plastic_pirate" in value ? RewardType.plastic_pirate : "runner" in value ? RewardType.runner : "hydrator" in value ? RewardType.hydrator : value;
 }
 function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
@@ -488,6 +553,9 @@ function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uin
     guest: null;
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
+}
+function from_candid_vec_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_RewardType>): Array<RewardType> {
+    return value.map((x)=>from_candid_RewardType_n9(_uploadFile, _downloadFile, x));
 }
 function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n2(_uploadFile, _downloadFile, value);

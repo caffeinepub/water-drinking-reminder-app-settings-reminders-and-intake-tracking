@@ -2,60 +2,14 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-extend-the-frontend-ui-to-include-new-sections-for-sleep-and-running-alongside-existing-hydration-features-using-clear-navigation-within-the-existing-app-layout",
-      "featureTitle": "Extend the frontend UI to include new sections for Sleep and Running, alongside existing Hydration features, using clear navigation within the existing App layout.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/running/RunHistoryList.tsx",
-        "frontend/src/components/running/RunLogForm.tsx",
-        "frontend/src/components/running/RunningView.tsx",
-        "frontend/src/components/sleep/SleepHistoryList.tsx",
-        "frontend/src/components/sleep/SleepLogForm.tsx",
-        "frontend/src/components/sleep/SleepView.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-12"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-react-query-hooks-and-frontend-data-flow-for-sleep-running-and-custom-reminders-using-the-existing-actor-based-pattern",
-      "featureTitle": "Add React Query hooks and frontend data flow for sleep, running, and custom reminders using the existing actor-based pattern.",
-      "files": [
-        "frontend/src/components/reminders/ReminderControls.tsx",
-        "frontend/src/components/running/RunLogForm.tsx",
-        "frontend/src/components/sleep/SleepLogForm.tsx",
-        "frontend/src/hooks/useQueries.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-13"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-in-app-reminder-scheduler-to-support-triggering-reminders-for-the-new-reminder-types-sleep-and-user-defined-health-reminders-in-addition-to-hydration-using-browser-notifications-when-permitted-and-otherwise-an-in-app-banner-toast",
-      "featureTitle": "Update the in-app reminder scheduler to support triggering reminders for the new reminder types (sleep and user-defined health reminders) in addition to hydration, using browser Notifications when permitted and otherwise an in-app banner/toast.",
+      "featureId": "feature-implement-a-new-local-streak-break-reminder-that-notifies-the-user-when-their-current-hydration-streak-is-at-risk-of-breaking-streak-0-and-today-s-goal-is-not-yet-met-near-end-of-day-use-browser-notifications-when-permitted-otherwise-show-the-existing-in-app-reminder-banner",
+      "featureTitle": "Implement a new local streak-break reminder that notifies the user when their current hydration streak is at risk of breaking (streak > 0 and today’s goal is not yet met, near end-of-day). Use browser notifications when permitted; otherwise show the existing in-app reminder banner.",
       "files": [
         "frontend/src/App.tsx",
         "frontend/src/components/reminders/InAppReminderBanner.tsx",
-        "frontend/src/components/reminders/ReminderControls.tsx",
-        "frontend/src/hooks/useReminderSchedulerContext.tsx"
+        "frontend/src/components/reminders/StreakBreakReminderController.tsx",
+        "frontend/src/hooks/useReminderSchedulerContext.tsx",
+        "frontend/src/hooks/useStreakBreakReminder.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -66,7 +20,27 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-14"
+        "REQ-27"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-expose-user-controls-in-the-existing-reminders-ui-to-enable-disable-the-streak-break-reminder-and-configure-the-warning-window-timing-e-g-number-of-hours-before-day-end-persist-these-preferences-locally-device-using-localstorage",
+      "featureTitle": "Expose user controls in the existing Reminders UI to enable/disable the streak-break reminder and configure the warning window timing (e.g., number of hours before day end). Persist these preferences locally (device) using localStorage.",
+      "files": [
+        "frontend/src/components/reminders/ReminderControls.tsx",
+        "frontend/src/hooks/useStreakBreakReminder.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-28"
       ],
       "confidence": "high"
     }

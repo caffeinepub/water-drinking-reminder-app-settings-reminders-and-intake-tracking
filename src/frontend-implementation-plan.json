@@ -1,135 +1,64 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add Sleep + Running sections, data hooks, and multi-type reminder scheduling",
+  "title": "Streak-break reminder controls and local notification/in-app fallback",
   "requirements": [
     {
-      "id": "REQ-12",
-      "summary": "Extend the authenticated UI with new Sleep and Running sections integrated into the existing tabbed App layout while keeping hydration features intact.",
+      "id": "REQ-27",
+      "summary": "Add a local streak-break reminder that fires near end-of-day when streak > 0 and today’s hydration goal is not met, using browser notifications when allowed or the in-app banner otherwise, with once-per-day anti-spam.",
       "acceptanceCriteria": [
-        "Authenticated users can navigate to a Sleep section where they can configure a sleep schedule and log sleep entries, and can view a recent sleep history list.",
-        "Authenticated users can navigate to a Running section where they can log runs and view a recent run history list with basic summary stats (e.g., total distance for last 7 days and/or average pace derived from logged data).",
-        "All new user-facing text is in English.",
-        "Existing hydration tabs/features (Reminders, History, Settings, Today’s progress, Quick add) remain functional."
+        "When streak > 0 and today’s hydration goal is not yet met, a streak-break reminder can fire during a configurable “warning window” near the end of the user’s local day.",
+        "The reminder uses the browser Notification API if permission is granted; otherwise it appears in the existing InAppReminderBanner UI.",
+        "The reminder content is English, chill/encouraging, and not aggressive or shaming.",
+        "The streak-break reminder does not spam: at most once per local calendar day (per user/device) unless the user dismisses and re-enables it explicitly."
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Add new TabsTriggers/TabsContent for Sleep and Running within the existing Tabs layout, ensuring existing Hydration (Reminders/History/Settings) content remains wired and functional."
-        },
-        {
-          "path": "frontend/src/components/sleep/SleepView.tsx",
-          "operation": "create",
-          "description": "Create a Sleep section view that wires together sleep schedule configuration, a sleep log form, and a recent sleep history list using the new React Query hooks."
-        },
-        {
-          "path": "frontend/src/components/sleep/SleepScheduleForm.tsx",
-          "operation": "create",
-          "description": "Create a form UI for sleep schedule settings (enabled flag, target bedtime, target wake time, days-of-week selection) and persist changes via a mutation hook."
-        },
-        {
-          "path": "frontend/src/components/sleep/SleepLogForm.tsx",
-          "operation": "create",
-          "description": "Create a simple sleep log entry form (e.g., hours slept and date) that submits via a mutation hook and refreshes sleep history on success."
-        },
-        {
-          "path": "frontend/src/components/sleep/SleepHistoryList.tsx",
-          "operation": "create",
-          "description": "Create a recent sleep history list UI backed by a query hook, including empty/loading states consistent with the app."
-        },
-        {
-          "path": "frontend/src/components/running/RunningView.tsx",
-          "operation": "create",
-          "description": "Create a Running section view that includes a run logging form, recent run history list, and basic derived summary stats (e.g., last-7-days total distance and average pace) using query data."
-        },
-        {
-          "path": "frontend/src/components/running/RunLogForm.tsx",
-          "operation": "create",
-          "description": "Create a run logging form (date/time, distance, duration/time, optional notes if supported) that calls the run log mutation hook and invalidates relevant caches."
-        },
-        {
-          "path": "frontend/src/components/running/RunHistoryList.tsx",
-          "operation": "create",
-          "description": "Create a recent run history list UI backed by a query hook, showing core fields and derived per-run pace display when available."
-        }
-      ]
-    },
-    {
-      "id": "REQ-13",
-      "summary": "Add actor-based React Query hooks for sleep schedule/logs, running logs, and custom reminder definitions with correct cache invalidation and consistent actor-not-available handling.",
-      "acceptanceCriteria": [
-        "frontend/src/hooks/useQueries.ts (or additional hook modules) includes query/mutation hooks for sleep schedule, sleep logs, run logs, and custom reminder definitions.",
-        "On successful mutations, the correct cached queries are invalidated so the UI refreshes without a manual reload.",
-        "Hooks work with Internet Identity authentication and handle the actor-not-available state consistently with existing hooks."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/backend.d.ts",
-          "operation": "modify",
-          "description": "Update the frontend backend type definitions to reflect new/expanded backend capabilities needed by the Sleep schedule and Custom reminders flows (e.g., sleep schedule get/update capabilities), keeping existing hydration/running/custom reminders typing aligned with the generated declarations."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add/extend React Query hooks for: sleep schedule get/update, sleep history fetch + add sleep log, running history fetch + add run log, and custom reminders list/create/update/delete; mirror existing actor-based pattern (throw on missing actor, gate with enabled: !!actor && !actorFetching) and invalidate the correct query keys on mutation success. Use the authorization component's frontend guidance for Internet Identity + cached data clearing patterns; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/reminders/ReminderControls.tsx",
-          "operation": "modify",
-          "description": "Wire custom reminder definition data flow into the existing Reminders tab by using the new custom reminder hooks (list + create/update/delete + enable/disable), while preserving the current hydration reminder controls and their behavior."
-        },
-        {
-          "path": "frontend/src/components/sleep/SleepScheduleForm.tsx",
-          "operation": "modify",
-          "description": "Connect the sleep schedule form UI to the new sleep schedule query/mutation hooks with proper loading, error, and success states."
-        },
-        {
-          "path": "frontend/src/components/sleep/SleepLogForm.tsx",
-          "operation": "modify",
-          "description": "Connect the sleep log form to the new sleep log mutation hook and ensure relevant sleep queries are invalidated on success."
-        },
-        {
-          "path": "frontend/src/components/running/RunLogForm.tsx",
-          "operation": "modify",
-          "description": "Connect the run log form to the new running mutation hook and ensure running history/stat queries are invalidated on success."
-        }
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "summary": "Upgrade the in-app reminder scheduler to trigger hydration, sleep, and custom reminders with browser Notifications (tagged per type) and a clear in-app fallback UI.",
-      "acceptanceCriteria": [
-        "The scheduler can display distinct reminder content (title/body) for different reminder types (e.g., Hydration vs Sleep vs Custom).",
-        "When Notification permission is granted, notifications use an appropriate tag per reminder type so repeated notifications behave predictably in the browser.",
-        "When Notification permission is not granted or notification display fails, an in-app reminder UI is shown that clearly indicates which reminder fired (English text).",
-        "The existing hydration reminder controls continue to work, and new reminder types can be enabled/disabled without breaking hydration reminders."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useReminderScheduler.ts",
-          "operation": "modify",
-          "description": "Refactor the scheduler to support multiple reminder types (Hydration, Sleep, Custom) with distinct title/body, per-type notification tags, and a unified state so multiple components consume the same scheduler instance. Keep the existing hydration interval + running state behavior, and add scheduling logic for sleep reminders (based on saved schedule) and custom reminders (based on enabled definitions)."
-        },
         {
           "path": "frontend/src/hooks/useReminderSchedulerContext.tsx",
-          "operation": "create",
-          "description": "Create a React context/provider wrapper to ensure the reminder scheduler state (including current fired reminder details) is shared across ReminderControls and InAppReminderBanner, avoiding duplicated timers and inconsistent UI."
-        },
-        {
-          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire the reminder scheduler provider at the app level so reminder controls and the in-app banner share a single scheduler instance and consistent reminder firing/dismiss behavior."
+          "description": "Extend the reminder scheduler to support a new reminder type for streak-break and expose a public method (via context) to fire a one-off reminder immediately; reuse the existing Notification API vs in-app fallback behavior for delivery."
         },
         {
           "path": "frontend/src/components/reminders/InAppReminderBanner.tsx",
           "operation": "modify",
-          "description": "Update the banner to render the currently-fired reminder content (type-specific title/body in English) from the shared scheduler state, instead of hydration-only text."
+          "description": "Update the in-app reminder banner to recognize and render the new streak-break reminder type (including an appropriate icon) while keeping the existing banner UI and dismissal behavior."
         },
+        {
+          "path": "frontend/src/hooks/useStreakBreakReminder.ts",
+          "operation": "create",
+          "description": "Implement a frontend hook that evaluates: current streak (from user rewards), whether today’s hydration goal is met (todays intake vs daily goal), local time vs end-of-day warning window, and local anti-spam state; when eligible, fire the streak-break reminder through the reminder scheduler context (Notification API if permitted, else in-app banner)."
+        },
+        {
+          "path": "frontend/src/components/reminders/StreakBreakReminderController.tsx",
+          "operation": "create",
+          "description": "Add a small controller component that runs the streak-break reminder hook on an interval while the user is authenticated, ensuring reminders can fire without requiring the Reminders tab to be open."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire the StreakBreakReminderController into the authenticated app shell (inside ReminderSchedulerProvider) so the streak-break reminder evaluation runs during normal app usage."
+        }
+      ]
+    },
+    {
+      "id": "REQ-28",
+      "summary": "Add Reminders tab controls to enable/disable the streak-break reminder and configure the end-of-day warning window (hours before day end), persisted in localStorage and applied immediately.",
+      "acceptanceCriteria": [
+        "A user can toggle the streak-break reminder on/off from the Reminders tab.",
+        "A user can adjust the warning window timing (hours before end of day) and the app uses that setting immediately.",
+        "Settings persist across reloads on the same device via localStorage.",
+        "All user-facing labels/help text are in English."
+      ],
+      "file_operations": [
         {
           "path": "frontend/src/components/reminders/ReminderControls.tsx",
           "operation": "modify",
-          "description": "Extend the controls UI to enable/disable scheduling for new reminder types (sleep and custom) while preserving existing hydration reminder controls; ensure notification permission handling continues to work and failures fall back to the in-app banner."
+          "description": "Add a new Streak-Break Reminder section to the existing Reminders UI with (1) an enable/disable toggle and (2) a numeric input for warning window hours before local day end; persist both preferences to localStorage and apply changes immediately (including clearing today’s “already fired” flag when the user explicitly toggles off then back on)."
+        },
+        {
+          "path": "frontend/src/hooks/useStreakBreakReminder.ts",
+          "operation": "modify",
+          "description": "Read/write localStorage preferences for streak-break enablement and warning window hours, and read/write a local per-day anti-spam marker (e.g., last-fired local date) used by the reminder logic."
         }
       ]
     }

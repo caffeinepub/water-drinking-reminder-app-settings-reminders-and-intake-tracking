@@ -5,7 +5,7 @@ const REMINDER_INTERVAL_KEY = 'hydration_reminder_interval';
 const REMINDER_RUNNING_KEY = 'hydration_reminder_running';
 const DEFAULT_INTERVAL_MINUTES = 60;
 
-export type ReminderType = 'hydration' | 'sleep' | 'custom';
+export type ReminderType = 'hydration' | 'sleep' | 'custom' | 'streak-break';
 
 export interface FiredReminder {
   type: ReminderType;
@@ -22,9 +22,38 @@ interface ReminderSchedulerContextType {
   startReminders: () => void;
   pauseReminders: () => void;
   dismissReminder: () => void;
+  fireReminder: (reminder: FiredReminder) => void;
 }
 
 const ReminderSchedulerContext = createContext<ReminderSchedulerContextType | undefined>(undefined);
+
+// Gen-Z friendly hydration reminder templates
+const HYDRATION_REMINDERS = [
+  {
+    title: "Hydration check! 💧",
+    body: "Time to sip some water and keep those vibes high! ✨"
+  },
+  {
+    title: "Water break! 🌊",
+    body: "Your body's calling – grab that water bottle! 💙"
+  },
+  {
+    title: "Stay hydrated, bestie! 💦",
+    body: "Quick water break = instant glow up! You got this! ☀️"
+  },
+  {
+    title: "Drink up! 🥤",
+    body: "Hydration = good vibes only. Let's keep it going! 🔥"
+  },
+  {
+    title: "Water time! 💧",
+    body: "Your future self will thank you. Take a sip! 🙌"
+  },
+  {
+    title: "Thirsty? 🌊",
+    body: "Bet! Time to hydrate and feel amazing! ✨"
+  },
+];
 
 export function ReminderSchedulerProvider({ children }: { children: ReactNode }) {
   const [isRunning, setIsRunning] = useState(() => {
@@ -52,7 +81,7 @@ export function ReminderSchedulerProvider({ children }: { children: ReactNode })
       setNotificationPermission(permission);
       
       if (permission === 'granted') {
-        toast.success('Notifications enabled successfully');
+        toast.success('Notifications enabled! 🎉');
       } else if (permission === 'denied') {
         toast.error('Notification permission denied. You can still use in-app reminders.');
       }
@@ -81,6 +110,10 @@ export function ReminderSchedulerProvider({ children }: { children: ReactNode })
     }
   }, [notificationPermission]);
 
+  const fireReminder = useCallback((reminder: FiredReminder) => {
+    showReminder(reminder);
+  }, [showReminder]);
+
   const dismissReminder = useCallback(() => {
     setShowInAppReminder(null);
   }, []);
@@ -94,17 +127,20 @@ export function ReminderSchedulerProvider({ children }: { children: ReactNode })
     const intervalMs = intervalMinutes * 60 * 1000;
 
     intervalRef.current = setInterval(() => {
+      // Randomly select a reminder template
+      const randomReminder = HYDRATION_REMINDERS[Math.floor(Math.random() * HYDRATION_REMINDERS.length)];
+      
       showReminder({
         type: 'hydration',
-        title: 'Time to Hydrate! 💧',
-        body: 'Remember to drink some water to stay healthy and hydrated.',
+        title: randomReminder.title,
+        body: randomReminder.body,
         tag: 'hydration-reminder',
       });
     }, intervalMs);
 
     setIsRunning(true);
     localStorage.setItem(REMINDER_RUNNING_KEY, 'true');
-    toast.success('Reminders started');
+    toast.success('Reminders started! 🔔');
   }, [showReminder]);
 
   const pauseReminders = useCallback(() => {
@@ -150,6 +186,7 @@ export function ReminderSchedulerProvider({ children }: { children: ReactNode })
         startReminders,
         pauseReminders,
         dismissReminder,
+        fireReminder,
       }}
     >
       {children}

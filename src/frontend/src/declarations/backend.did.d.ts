@@ -18,6 +18,10 @@ export interface CustomReminderDefinition {
   'lastSent' : bigint,
 }
 export interface HydrationLog { 'date' : bigint, 'totalIntake' : number }
+export type RewardType = { 'sleepyhead' : null } |
+  { 'plastic_pirate' : null } |
+  { 'runner' : null } |
+  { 'hydrator' : null };
 export interface RunningLog {
   'pace' : number,
   'time' : bigint,
@@ -28,6 +32,12 @@ export interface RunningLog {
 export interface SleepLog { 'hours' : number, 'date' : bigint }
 export interface UserData { 'dailyGoal' : number, 'cupSize' : number }
 export interface UserProfile { 'name' : string }
+export interface UserRewards {
+  'streak' : bigint,
+  'badges' : Array<RewardType>,
+  'lastUpdated' : bigint,
+  'completedGoals' : bigint,
+}
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -42,7 +52,7 @@ export interface _SERVICE {
   >,
   'addDailyIntake' : ActorMethod<[number], undefined>,
   /**
-   * / Sleep Tracking Functions
+   * / Sleep Tracking
    */
   'addSleepLog' : ActorMethod<[number], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
@@ -55,6 +65,10 @@ export interface _SERVICE {
   'getTodaysRuns' : ActorMethod<[], Array<RunningLog>>,
   'getTodaysSleep' : ActorMethod<[], number>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  /**
+   * / Rewards & Gamification
+   */
+  'getUserRewards' : ActorMethod<[], UserRewards>,
   'getUserSettings' : ActorMethod<[], [] | [UserData]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'listCustomReminders' : ActorMethod<[], Array<CustomReminderDefinition>>,
@@ -69,7 +83,7 @@ export interface _SERVICE {
     undefined
   >,
   /**
-   * / Hydration Tracking Functions
+   * / Hydration Tracking
    */
   'updateUserSettings' : ActorMethod<[number, number], undefined>,
 }

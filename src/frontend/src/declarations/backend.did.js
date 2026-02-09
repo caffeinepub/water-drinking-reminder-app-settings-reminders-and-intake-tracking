@@ -26,6 +26,18 @@ export const RunningLog = IDL.Record({
   'timestamp' : IDL.Int,
 });
 export const SleepLog = IDL.Record({ 'hours' : IDL.Float64, 'date' : IDL.Int });
+export const RewardType = IDL.Variant({
+  'sleepyhead' : IDL.Null,
+  'plastic_pirate' : IDL.Null,
+  'runner' : IDL.Null,
+  'hydrator' : IDL.Null,
+});
+export const UserRewards = IDL.Record({
+  'streak' : IDL.Nat,
+  'badges' : IDL.Vec(RewardType),
+  'lastUpdated' : IDL.Int,
+  'completedGoals' : IDL.Nat,
+});
 export const UserData = IDL.Record({
   'dailyGoal' : IDL.Float64,
   'cupSize' : IDL.Float64,
@@ -61,6 +73,7 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'getUserRewards' : IDL.Func([], [UserRewards], ['query']),
   'getUserSettings' : IDL.Func([], [IDL.Opt(UserData)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'listCustomReminders' : IDL.Func(
@@ -100,6 +113,18 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : IDL.Int,
   });
   const SleepLog = IDL.Record({ 'hours' : IDL.Float64, 'date' : IDL.Int });
+  const RewardType = IDL.Variant({
+    'sleepyhead' : IDL.Null,
+    'plastic_pirate' : IDL.Null,
+    'runner' : IDL.Null,
+    'hydrator' : IDL.Null,
+  });
+  const UserRewards = IDL.Record({
+    'streak' : IDL.Nat,
+    'badges' : IDL.Vec(RewardType),
+    'lastUpdated' : IDL.Int,
+    'completedGoals' : IDL.Nat,
+  });
   const UserData = IDL.Record({
     'dailyGoal' : IDL.Float64,
     'cupSize' : IDL.Float64,
@@ -135,6 +160,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'getUserRewards' : IDL.Func([], [UserRewards], ['query']),
     'getUserSettings' : IDL.Func([], [IDL.Opt(UserData)], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'listCustomReminders' : IDL.Func(

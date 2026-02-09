@@ -1,143 +1,96 @@
 {
   "kind": "build_request",
-  "title": "Expand app with sleep scheduling, running tracker, and additional health reminders/tracking",
+  "title": "Add streak-break reminder (streak at risk) with accurate streak tracking",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-9",
-      "text": "Add backend data models and actor APIs for sleep scheduling and sleep tracking stored per authenticated caller Principal.",
+      "id": "REQ-25",
+      "text": "Update backend hydration streak logic so the stored streak represents consecutive days where the user met their daily hydration goal, and automatically resets when a day is missed.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-3"
         ],
         "quotes": [
-          "Add sleep scheduler, running tracker and other health reminders and tracker"
+          "Add streak break"
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes query + update APIs to save and retrieve the caller’s sleep schedule settings (at minimum: enabled flag, target bedtime, target wake time, and applicable days of week).",
-        "Backend exposes APIs to add a sleep log entry and to fetch recent sleep log history for the caller.",
-        "All sleep schedule/log APIs enforce the same authorization pattern used by existing hydration APIs (caller must have #user permission; no cross-user access)."
+        "When a user meets their daily goal on consecutive days, the streak increments by 1 per day.",
+        "If the user misses a day (gap of 2+ days since the last goal-met day), the streak resets to 0 (or restarts at 1 on the next goal-met day).",
+        "Meeting the goal multiple times in the same calendar day does not increment the streak more than once for that day.",
+        "getUserRewards returns a streak value that is consistent with the consecutive-days rule (including after time has passed without new writes)."
       ]
     },
     {
-      "id": "REQ-10",
-      "text": "Add backend data models and actor APIs for a running tracker that lets an authenticated user log runs and view basic running history/stats stored per caller Principal.",
+      "id": "REQ-26",
+      "text": "Add a conditional Motoko state migration (backend/migration.mo) to safely upgrade existing stored user rewards to the updated streak data structure used by the new consecutive-day streak logic.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-3"
         ],
         "quotes": [
-          "Add sleep scheduler, running tracker and other health reminders and tracker"
+          "Add streak break"
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes an API to add a run log entry (at minimum: date/time, distance, duration; optional notes).",
-        "Backend exposes an API to fetch recent run history for the caller.",
-        "All running APIs enforce the same authorization pattern used by existing hydration APIs (caller must have #user permission; no cross-user access)."
+        "Project upgrades without trapping due to missing/new fields in persisted rewards data.",
+        "Existing users keep their current streak count (or it is deterministically normalized using the new logic) after upgrade."
       ]
     },
     {
-      "id": "REQ-11",
-      "text": "Add backend support for additional (non-hydration) health reminders by allowing users to create, update, list, and delete custom reminder definitions stored per caller Principal.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Add sleep scheduler, running tracker and other health reminders and tracker"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes APIs to create/list/update/delete reminder definitions for the caller.",
-        "A reminder definition includes (at minimum) a user-visible title, an enabled flag, and a schedule configuration sufficient for the frontend to trigger reminders (e.g., time-of-day OR repeating interval minutes).",
-        "All reminder APIs enforce the same authorization pattern used by existing hydration APIs (caller must have #user permission; no cross-user access)."
-      ]
-    },
-    {
-      "id": "REQ-12",
-      "text": "Extend the frontend UI to include new sections for Sleep and Running, alongside existing Hydration features, using clear navigation within the existing App layout.",
+      "id": "REQ-27",
+      "text": "Implement a new local streak-break reminder that notifies the user when their current hydration streak is at risk of breaking (streak > 0 and today’s goal is not yet met, near end-of-day). Use browser notifications when permitted; otherwise show the existing in-app reminder banner.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-3"
         ],
         "quotes": [
-          "Add sleep scheduler, running tracker and other health reminders and tracker"
+          "Add streak break"
         ]
       },
       "acceptanceCriteria": [
-        "Authenticated users can navigate to a Sleep section where they can configure a sleep schedule and log sleep entries, and can view a recent sleep history list.",
-        "Authenticated users can navigate to a Running section where they can log runs and view a recent run history list with basic summary stats (e.g., total distance for last 7 days and/or average pace derived from logged data).",
-        "All new user-facing text is in English.",
-        "Existing hydration tabs/features (Reminders, History, Settings, Today’s progress, Quick add) remain functional."
+        "When streak > 0 and today’s hydration goal is not yet met, a streak-break reminder can fire during a configurable “warning window” near the end of the user’s local day.",
+        "The reminder uses the browser Notification API if permission is granted; otherwise it appears in the existing InAppReminderBanner UI.",
+        "The reminder content is English, chill/encouraging, and not aggressive or shaming.",
+        "The streak-break reminder does not spam: at most once per local calendar day (per user/device) unless the user dismisses and re-enables it explicitly."
       ]
     },
     {
-      "id": "REQ-13",
-      "text": "Add React Query hooks and frontend data flow for sleep, running, and custom reminders using the existing actor-based pattern.",
+      "id": "REQ-28",
+      "text": "Expose user controls in the existing Reminders UI to enable/disable the streak-break reminder and configure the warning window timing (e.g., number of hours before day end). Persist these preferences locally (device) using localStorage.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-3"
         ],
         "quotes": [
-          "Add sleep scheduler, running tracker and other health reminders and tracker"
+          "Add streak break"
         ]
       },
       "acceptanceCriteria": [
-        "frontend/src/hooks/useQueries.ts (or additional hook modules) includes query/mutation hooks for sleep schedule, sleep logs, run logs, and custom reminder definitions.",
-        "On successful mutations, the correct cached queries are invalidated so the UI refreshes without a manual reload.",
-        "Hooks work with Internet Identity authentication and handle the actor-not-available state consistently with existing hooks."
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "text": "Update the in-app reminder scheduler to support triggering reminders for the new reminder types (sleep and user-defined health reminders) in addition to hydration, using browser Notifications when permitted and otherwise an in-app banner/toast.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Add sleep scheduler, running tracker and other health reminders and tracker"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The scheduler can display distinct reminder content (title/body) for different reminder types (e.g., Hydration vs Sleep vs Custom).",
-        "When Notification permission is granted, notifications use an appropriate tag per reminder type so repeated notifications behave predictably in the browser.",
-        "When Notification permission is not granted or notification display fails, an in-app reminder UI is shown that clearly indicates which reminder fired (English text).",
-        "The existing hydration reminder controls continue to work, and new reminder types can be enabled/disabled without breaking hydration reminders."
+        "A user can toggle the streak-break reminder on/off from the Reminders tab.",
+        "A user can adjust the warning window timing (hours before end of day) and the app uses that setting immediately.",
+        "Settings persist across reloads on the same device via localStorage.",
+        "All user-facing labels/help text are in English."
       ]
     }
   ],
   "constraints": [
-    "Respect the single-actor backend architecture: keep all Motoko logic in backend/main.mo.",
-    "Do not edit files under frontend/src/components/ui or any other frontend immutablePaths listed in SYSTEM_CONTEXT.",
-    "Use Internet Identity as the only authentication mechanism; store all user data per Principal.",
-    "Do not add external databases or third-party real-time services; scheduling remains in-browser while the app is open."
+    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
+    "Generate backend/migration.mo only as needed for upgrading existing stable state (conditional migration).",
+    "Do not modify files under frontend/src/components/ui or any other frontend immutablePaths; compose existing UI components instead.",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Integrating wearable devices or importing data from Apple Health / Google Fit / Strava.",
-    "True background notifications or push notifications when the app/tab is closed.",
-    "Advanced running analytics (GPS routes, maps, VO2 max, cadence) beyond basic logged entries and simple derived stats.",
-    "Medical advice features or diagnosis features."
+    "Do not add push notifications, background OS scheduling, WebSockets, or any server-side cron/scheduler.",
+    "Do not introduce third-party authentication providers beyond Internet Identity.",
+    "Do not add external databases or off-canister storage/services."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

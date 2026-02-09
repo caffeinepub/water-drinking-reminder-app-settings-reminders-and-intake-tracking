@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile, UserData, HydrationLog, SleepLog, RunningLog, CustomReminderDefinition } from '../backend';
+import type { UserProfile, UserData, HydrationLog, SleepLog, RunningLog, CustomReminderDefinition, UserRewards } from '../backend';
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -88,9 +88,11 @@ export function useAddDailyIntake() {
       if (!actor) throw new Error('Actor not available');
       return actor.addDailyIntake(amount);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['todaysIntake'] });
-      queryClient.invalidateQueries({ queryKey: ['intakeHistory'] });
+    onSuccess: async () => {
+      // Invalidate and refetch to get updated rewards state
+      await queryClient.invalidateQueries({ queryKey: ['todaysIntake'] });
+      await queryClient.invalidateQueries({ queryKey: ['intakeHistory'] });
+      await queryClient.invalidateQueries({ queryKey: ['userRewards'] });
     },
   });
 }
@@ -103,6 +105,20 @@ export function useGetIntakeHistory() {
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
       return actor.getIntakeHistory();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+// Rewards hooks
+export function useGetUserRewards() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<UserRewards>({
+    queryKey: ['userRewards'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getUserRewards();
     },
     enabled: !!actor && !actorFetching,
   });

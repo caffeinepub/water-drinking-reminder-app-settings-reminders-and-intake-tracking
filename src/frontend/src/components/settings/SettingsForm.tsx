@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useGetUserSettings, useUpdateUserSettings } from '../../hooks/useQueries';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Settings } from 'lucide-react';
+import { Settings, Save } from 'lucide-react';
 
 export default function SettingsForm() {
   const { data: settings, isLoading } = useGetUserSettings();
@@ -28,22 +28,12 @@ export default function SettingsForm() {
     const cupValue = parseFloat(cupSize);
 
     if (isNaN(goalValue) || goalValue <= 0) {
-      toast.error('Daily goal must be a positive number');
+      toast.error('Please enter a valid daily goal');
       return;
     }
 
     if (isNaN(cupValue) || cupValue <= 0) {
-      toast.error('Cup size must be a positive number');
-      return;
-    }
-
-    if (goalValue > 10000) {
-      toast.error('Daily goal seems too high. Please enter a realistic value.');
-      return;
-    }
-
-    if (cupValue > 2000) {
-      toast.error('Cup size seems too large. Please enter a realistic value.');
+      toast.error('Please enter a valid cup size');
       return;
     }
 
@@ -52,16 +42,20 @@ export default function SettingsForm() {
         dailyGoal: goalValue,
         cupSize: cupValue,
       });
-      toast.success('Settings saved successfully');
+      toast.success('Settings saved! ✨', {
+        description: 'Your preferences have been updated',
+      });
     } catch (error) {
-      toast.error('Failed to save settings. Please try again.');
-      console.error('Settings save error:', error);
+      toast.error('Failed to save settings', {
+        description: 'Please try again',
+      });
+      console.error('Settings update error:', error);
     }
   };
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border-2 shadow-lg">
         <CardContent className="pt-6">
           <div className="h-64 flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -72,29 +66,29 @@ export default function SettingsForm() {
   }
 
   return (
-    <Card>
+    <Card className="border-2 shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Settings className="w-5 h-5" />
-          Hydration Settings
+          <Settings className="w-5 h-5 text-primary" />
+          Settings
         </CardTitle>
         <CardDescription>
-          Customize your daily water intake goals and preferences
+          Customize your hydration tracking preferences
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="dailyGoal">Daily Water Goal (ml)</Label>
+            <Label htmlFor="dailyGoal" className="text-sm font-medium">
+              Daily Water Goal (ml)
+            </Label>
             <Input
               id="dailyGoal"
               type="number"
               value={dailyGoal}
               onChange={(e) => setDailyGoal(e.target.value)}
               placeholder="2000"
-              min="100"
-              max="10000"
-              step="100"
+              className="border-2"
             />
             <p className="text-xs text-muted-foreground">
               Recommended: 2000-3000 ml per day
@@ -102,24 +96,38 @@ export default function SettingsForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cupSize">Default Cup Size (ml)</Label>
+            <Label htmlFor="cupSize" className="text-sm font-medium">
+              Default Cup Size (ml)
+            </Label>
             <Input
               id="cupSize"
               type="number"
               value={cupSize}
               onChange={(e) => setCupSize(e.target.value)}
               placeholder="250"
-              min="50"
-              max="2000"
-              step="50"
+              className="border-2"
             />
             <p className="text-xs text-muted-foreground">
               Used for quick-add "1 Cup" button
             </p>
           </div>
 
-          <Button type="submit" className="w-full" disabled={updateSettings.isPending}>
-            {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
+          <Button
+            type="submit"
+            disabled={updateSettings.isPending}
+            className="w-full shadow-md hover:shadow-glow transition-all"
+          >
+            {updateSettings.isPending ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                Saving...
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Save className="w-4 h-4" />
+                Save Settings
+              </div>
+            )}
           </Button>
         </form>
       </CardContent>

@@ -1,104 +1,67 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T04:25:47.778Z",
+  "generatedAt": "2026-02-09T06:40:57.495Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 6,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-10",
-        "summary": "Add backend data models and actor APIs for a running tracker that lets an authenticated user log runs and view basic running history/stats stored per caller Principal.",
+        "id": "REQ-25",
+        "summary": "Update backend hydration streak logic so the stored streak represents consecutive days where the user met their daily hydration goal, and automatically resets when a day is missed.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
-        "id": "REQ-11",
-        "summary": "Add backend support for additional (non-hydration) health reminders by allowing users to create, update, list, and delete custom reminder definitions stored per caller Principal.",
+        "id": "REQ-26",
+        "summary": "Add a conditional Motoko state migration (backend/migration.mo) to safely upgrade existing stored user rewards to the updated streak data structure used by the new consecutive-day streak logic.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
-        "id": "REQ-12",
-        "summary": "Extend the frontend UI to include new sections for Sleep and Running, alongside existing Hydration features, using clear navigation within the existing App layout.",
+        "id": "REQ-27",
+        "summary": "Implement a new local streak-break reminder that notifies the user when their current hydration streak is at risk of breaking (streak > 0 and today’s goal is not yet met, near end-of-day). Use browser notifications when permitted; otherwise show the existing in-app reminder banner.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/sleep/SleepView.tsx",
-          "frontend/src/components/sleep/SleepScheduleForm.tsx",
-          "frontend/src/components/sleep/SleepLogForm.tsx",
-          "frontend/src/components/sleep/SleepHistoryList.tsx",
-          "frontend/src/components/running/RunningView.tsx",
-          "frontend/src/components/running/RunLogForm.tsx",
-          "frontend/src/components/running/RunHistoryList.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/sleep/SleepView.tsx",
-          "frontend/src/components/sleep/SleepLogForm.tsx",
-          "frontend/src/components/sleep/SleepHistoryList.tsx",
-          "frontend/src/components/running/RunningView.tsx",
-          "frontend/src/components/running/RunLogForm.tsx",
-          "frontend/src/components/running/RunHistoryList.tsx"
-        ]
-      },
-      {
-        "id": "REQ-13",
-        "summary": "Add React Query hooks and frontend data flow for sleep, running, and custom reminders using the existing actor-based pattern.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/reminders/ReminderControls.tsx",
-          "frontend/src/components/sleep/SleepScheduleForm.tsx",
-          "frontend/src/components/sleep/SleepLogForm.tsx",
-          "frontend/src/components/running/RunLogForm.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/reminders/ReminderControls.tsx",
-          "frontend/src/components/sleep/SleepLogForm.tsx",
-          "frontend/src/components/running/RunLogForm.tsx"
-        ]
-      },
-      {
-        "id": "REQ-14",
-        "summary": "Update the in-app reminder scheduler to support triggering reminders for the new reminder types (sleep and user-defined health reminders) in addition to hydration, using browser Notifications when permitted and otherwise an in-app banner/toast.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useReminderScheduler.ts",
           "frontend/src/hooks/useReminderSchedulerContext.tsx",
-          "frontend/src/App.tsx",
           "frontend/src/components/reminders/InAppReminderBanner.tsx",
-          "frontend/src/components/reminders/ReminderControls.tsx"
+          "frontend/src/hooks/useStreakBreakReminder.ts",
+          "frontend/src/components/reminders/StreakBreakReminderController.tsx",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
           "frontend/src/hooks/useReminderSchedulerContext.tsx",
-          "frontend/src/App.tsx",
           "frontend/src/components/reminders/InAppReminderBanner.tsx",
-          "frontend/src/components/reminders/ReminderControls.tsx"
+          "frontend/src/hooks/useStreakBreakReminder.ts",
+          "frontend/src/components/reminders/StreakBreakReminderController.tsx",
+          "frontend/src/App.tsx"
         ]
       },
       {
-        "id": "REQ-9",
-        "summary": "Add backend data models and actor APIs for sleep scheduling and sleep tracking stored per authenticated caller Principal.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "id": "REQ-28",
+        "summary": "Expose user controls in the existing Reminders UI to enable/disable the streak-break reminder and configure the warning window timing (e.g., number of hours before day end). Persist these preferences locally (device) using localStorage.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/reminders/ReminderControls.tsx",
+          "frontend/src/hooks/useStreakBreakReminder.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/reminders/ReminderControls.tsx",
+          "frontend/src/hooks/useStreakBreakReminder.ts"
+        ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
-    "build-template/README.md",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
@@ -107,16 +70,11 @@
     "frontend/src/backend.ts",
     "frontend/src/components/reminders/InAppReminderBanner.tsx",
     "frontend/src/components/reminders/ReminderControls.tsx",
-    "frontend/src/components/running/RunHistoryList.tsx",
-    "frontend/src/components/running/RunLogForm.tsx",
-    "frontend/src/components/running/RunningView.tsx",
-    "frontend/src/components/sleep/SleepHistoryList.tsx",
-    "frontend/src/components/sleep/SleepLogForm.tsx",
-    "frontend/src/components/sleep/SleepView.tsx",
+    "frontend/src/components/reminders/StreakBreakReminderController.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
     "frontend/src/hooks/useReminderSchedulerContext.tsx",
+    "frontend/src/hooks/useStreakBreakReminder.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

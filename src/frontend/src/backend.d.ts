@@ -25,6 +25,12 @@ export interface CustomReminderDefinition {
     enabled: boolean;
     lastSent: bigint;
 }
+export interface UserRewards {
+    streak: bigint;
+    badges: Array<RewardType>;
+    lastUpdated: bigint;
+    completedGoals: bigint;
+}
 export interface HydrationLog {
     date: bigint;
     totalIntake: number;
@@ -35,6 +41,12 @@ export interface UserData {
 }
 export interface UserProfile {
     name: string;
+}
+export enum RewardType {
+    sleepyhead = "sleepyhead",
+    plastic_pirate = "plastic_pirate",
+    runner = "runner",
+    hydrator = "hydrator"
 }
 export enum UserRole {
     admin = "admin",
@@ -48,7 +60,7 @@ export interface backendInterface {
     addCustomReminder(name: string, description: string, interval: bigint, enabled: boolean): Promise<void>;
     addDailyIntake(amount: number): Promise<void>;
     /**
-     * / Sleep Tracking Functions
+     * / Sleep Tracking
      */
     addSleepLog(hours: number): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
@@ -61,6 +73,10 @@ export interface backendInterface {
     getTodaysRuns(): Promise<Array<RunningLog>>;
     getTodaysSleep(): Promise<number>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    /**
+     * / Rewards & Gamification
+     */
+    getUserRewards(): Promise<UserRewards>;
     getUserSettings(): Promise<UserData | null>;
     isCallerAdmin(): Promise<boolean>;
     listCustomReminders(): Promise<Array<CustomReminderDefinition>>;
@@ -72,7 +88,7 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     updateCustomReminder(name: string, description: string, interval: bigint, enabled: boolean): Promise<void>;
     /**
-     * / Hydration Tracking Functions
+     * / Hydration Tracking
      */
     updateUserSettings(dailyGoal: number, cupSize: number): Promise<void>;
 }

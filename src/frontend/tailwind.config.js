@@ -41,6 +41,14 @@ export default {
                     DEFAULT: 'oklch(var(--accent) / <alpha-value>)',
                     foreground: 'oklch(var(--accent-foreground))'
                 },
+                success: {
+                    DEFAULT: 'oklch(var(--success) / <alpha-value>)',
+                    foreground: 'oklch(var(--success-foreground))'
+                },
+                warning: {
+                    DEFAULT: 'oklch(var(--warning) / <alpha-value>)',
+                    foreground: 'oklch(var(--warning-foreground))'
+                },
                 popover: {
                     DEFAULT: 'oklch(var(--popover))',
                     foreground: 'oklch(var(--popover-foreground))'
@@ -60,10 +68,15 @@ export default {
             borderRadius: {
                 lg: 'var(--radius)',
                 md: 'calc(var(--radius) - 2px)',
-                sm: 'calc(var(--radius) - 4px)'
+                sm: 'calc(var(--radius) - 4px)',
+                xl: 'calc(var(--radius) + 4px)',
+                '2xl': 'calc(var(--radius) + 8px)',
+                '3xl': 'calc(var(--radius) + 12px)'
             },
             boxShadow: {
-                xs: '0 1px 2px 0 rgba(0,0,0,0.05)'
+                xs: '0 1px 2px 0 rgba(0,0,0,0.05)',
+                glow: '0 0 20px -5px oklch(var(--primary) / 0.3)',
+                'glow-lg': '0 0 40px -10px oklch(var(--primary) / 0.4)'
             },
             keyframes: {
                 'accordion-down': {
@@ -73,11 +86,32 @@ export default {
                 'accordion-up': {
                     from: { height: 'var(--radix-accordion-content-height)' },
                     to: { height: '0' }
+                },
+                float: {
+                    '0%, 100%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-10px)' }
+                },
+                'pulse-glow': {
+                    '0%, 100%': { boxShadow: '0 0 0 0 oklch(var(--primary) / 0.4)' },
+                    '50%': { boxShadow: '0 0 20px 8px oklch(var(--primary) / 0)' }
+                },
+                shimmer: {
+                    '0%': { backgroundPosition: '-200% center' },
+                    '100%': { backgroundPosition: '200% center' }
+                },
+                'confetti-pop': {
+                    '0%': { transform: 'scale(0) rotate(0deg)', opacity: '0' },
+                    '50%': { transform: 'scale(1.2) rotate(180deg)', opacity: '1' },
+                    '100%': { transform: 'scale(1) rotate(360deg)', opacity: '1' }
                 }
             },
             animation: {
                 'accordion-down': 'accordion-down 0.2s ease-out',
-                'accordion-up': 'accordion-up 0.2s ease-out'
+                'accordion-up': 'accordion-up 0.2s ease-out',
+                float: 'float 3s ease-in-out infinite',
+                'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+                shimmer: 'shimmer 2s infinite',
+                'confetti-pop': 'confetti-pop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
             }
         }
     },

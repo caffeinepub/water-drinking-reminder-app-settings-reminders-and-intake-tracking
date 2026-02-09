@@ -11,15 +11,24 @@ import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
-  // Initialize the access control state
+  // Access Control
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  // User profile type
+  // Types
   public type UserProfile = {
     name : Text;
+  };
+
+  public type RewardType = {
+    #plastic_pirate;
+    #runner;
+    #hydrator;
+    #sleepyhead;
   };
 
   public type RunningLog = {
@@ -65,6 +74,15 @@ actor {
     #custom;
   };
 
+  public type UserRewards = {
+    streak : Nat;
+    badges : [RewardType];
+    completedGoals : Nat;
+    lastUpdated : Int; // Day number of last streak update (not nanoseconds)
+  };
+
+  // Storage Maps
+  var userRewards = Map.empty<Principal, UserRewards>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let userData = Map.empty<Principal, UserData>();
   let runningLogs = Map.empty<Principal, List.List<RunningLog>>();
@@ -72,7 +90,10 @@ actor {
   let customReminders = Map.empty<Principal, Map.Map<Text, CustomReminderDefinition>>();
   let sleepLogs = Map.empty<Principal, List.List<SleepLog>>();
 
-  // User profile management functions
+  ///////////////////////////////////////////////////////////////////////////////
+  // User Profile Management
+  ///////////////////////////////////////////////////////////////////////////////
+
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access profiles");
@@ -95,7 +116,32 @@ actor {
   };
 
   //////////////////////////////////////////////////////////////////////
-  /// Sleep Tracking Functions
+  /// Rewards & Gamification
+  //////////////////////////////////////////////////////////////////////
+
+  public query ({ caller }) func getUserRewards() : async UserRewards {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access rewards");
+    };
+    switch (userRewards.get(caller)) {
+      case (?rewards) { rewards };
+      case (null) { { streak = 0; badges = []; completedGoals = 0; lastUpdated = 0 } };
+    };
+  };
+
+  func updateRewards(caller : Principal, streak : Nat, completedGoals : Nat, currentBadges : [RewardType], lastUpdatedDay : Int) {
+    let newBadges = currentBadges;
+    let updatedRewards = {
+      streak;
+      badges = newBadges;
+      completedGoals;
+      lastUpdated = lastUpdatedDay;
+    };
+    userRewards.add(caller, updatedRewards);
+  };
+
+  //////////////////////////////////////////////////////////////////////
+  /// Sleep Tracking
   //////////////////////////////////////////////////////////////////////
 
   public shared ({ caller }) func addSleepLog(hours : Float) : async () {
@@ -114,7 +160,6 @@ actor {
         var todayExists = false;
         var updatedLogs = List.empty<SleepLog>();
 
-        // Explicitly specify type parameters for map
         let mappedLogs = existingLogs.map<SleepLog, SleepLog>(
           func(log) {
             if (log.date == today) {
@@ -124,13 +169,9 @@ actor {
           }
         );
 
-        // Update logs from mapped entries
         updatedLogs := List.fromArray(mappedLogs.toArray());
-
-        // Remove entries older than 6 days
         updatedLogs := updatedLogs.filter(func(log) { today - log.date <= 6 });
 
-        // Add the new log if today doesn't exist
         if (not todayExists) {
           return updatedLogs.add(newSleepLog);
         };
@@ -174,8 +215,9 @@ actor {
   };
 
   //////////////////////////////////////////////////////////////////////
-  /// Hydration Tracking Functions
+  /// Hydration Tracking
   //////////////////////////////////////////////////////////////////////
+
   public shared ({ caller }) func updateUserSettings(
     dailyGoal : Float,
     cupSize : Float,
@@ -215,7 +257,6 @@ actor {
         var todayExists = false;
         var updatedLogs = List.empty<HydrationLog>();
 
-        // Explicitly specify type parameters for map
         let mappedLogs = existingLogs.map<HydrationLog, HydrationLog>(
           func(log) {
             if (log.date == today) {
@@ -225,13 +266,9 @@ actor {
           }
         );
 
-        // Update logs from mapped entries
         updatedLogs := List.fromArray(mappedLogs.toArray());
-
-        // Remove entries older than 6 days
         updatedLogs := updatedLogs.filter(func(log) { today - log.date <= 6 });
 
-        // Add the new log if today doesn't exist
         if (not todayExists) {
           return updatedLogs.add(newLog);
         };
@@ -241,6 +278,7 @@ actor {
     };
 
     userIntakeHistory.add(caller, intakeHistory);
+    updateStreak(caller, today);
   };
 
   public query ({ caller }) func getTodaysIntake() : async Float {
@@ -265,12 +303,9 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access intake history");
     };
-
     switch (userIntakeHistory.get(caller)) {
       case (null) { [] };
-      case (?logs) {
-        logs.toArray();
-      };
+      case (?logs) { logs.toArray() };
     };
   };
 
@@ -438,5 +473,93 @@ actor {
       case (?reminders) { reminders };
     };
     reminderMap.values().toArray();
+  };
+
+  ////////////////////////////////////////////////////////////////////////
+  // Streak calculation & completion tracking                             
+  ////////////////////////////////////////////////////////////////////////
+
+  func updateStreak(caller : Principal, today : Int) {
+    let todayIntake = getTodaysIntakeInternal(caller, today);
+    let userSettings = getUserSettingsInternal(caller);
+
+    switch (todayIntake, userSettings) {
+      case (?intake, ?settings) {
+        if (intake >= settings.dailyGoal) {
+          updateStreakInternal(caller, today);
+        } else {
+          // Goal not met today, check if we need to reset streak
+          checkAndResetStreak(caller, today);
+        };
+      };
+      case (_) {
+        // No intake or settings, check if we need to reset streak
+        checkAndResetStreak(caller, today);
+      };
+    };
+  };
+
+  func getTodaysIntakeInternal(caller : Principal, today : Int) : ?Float {
+    switch (userIntakeHistory.get(caller)) {
+      case (null) { null };
+      case (?logs) {
+        switch (logs.find(func(log) { log.date == today })) {
+          case (null) { null };
+          case (?log) { ?log.totalIntake };
+        };
+      };
+    };
+  };
+
+  func getUserSettingsInternal(caller : Principal) : ?UserData {
+    userData.get(caller);
+  };
+
+  func checkAndResetStreak(caller : Principal, today : Int) {
+    let currentReward = switch (userRewards.get(caller)) {
+      case (?rewards) { rewards };
+      case (null) { return }; // No rewards to reset
+    };
+
+    // If lastUpdated is not yesterday, reset streak to 0
+    if (currentReward.lastUpdated > 0 and today > currentReward.lastUpdated + 1) {
+      updateRewards(
+        caller,
+        0,
+        currentReward.completedGoals,
+        currentReward.badges,
+        today,
+      );
+    };
+  };
+
+  func updateStreakInternal(caller : Principal, today : Int) {
+    let currentReward = switch (userRewards.get(caller)) {
+      case (?rewards) { rewards };
+      case (null) { { streak = 0; badges = []; completedGoals = 0; lastUpdated = 0 } };
+    };
+
+    // Calculate new streak based on consecutive days
+    let newStreak = if (currentReward.lastUpdated == 0) {
+      // First time logging
+      1;
+    } else if (today == currentReward.lastUpdated) {
+      // Same day, don't increment
+      currentReward.streak;
+    } else if (today == currentReward.lastUpdated + 1) {
+      // Consecutive day, increment
+      currentReward.streak + 1;
+    } else {
+      // Missed day(s), reset to 1
+      1;
+    };
+
+    updateRewards(
+      caller,
+      newStreak,
+      currentReward.completedGoals + 1,
+      currentReward.badges,
+      today,
+    );
   };
 };
