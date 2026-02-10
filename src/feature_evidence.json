@@ -1,4 +1,28 @@
 {
   "kind": "feature_evidence_report",
-  "features": []
+  "features": [
+    {
+      "featureId": "feature-update-the-frontend-intake-goal-completion-flow-so-that-after-adding-intake-online-the-ui-reliably-reflects-the-latest-streak-completed-goals-and-unlocked-badges-without-requiring-a-manual-refresh-and-surfaces-backend-errors-to-the-user",
+      "featureTitle": "Update the frontend intake/goal completion flow so that after adding intake (online), the UI reliably reflects the latest streak, completed goals, and unlocked badges without requiring a manual refresh, and surfaces backend errors to the user.",
+      "files": [
+        "frontend/src/components/intake/QuickAddIntake.tsx",
+        "frontend/src/components/settings/SettingsForm.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/offline/OfflineSyncProvider.tsx",
+        "frontend/src/utils/backendError.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    }
+  ]
 }

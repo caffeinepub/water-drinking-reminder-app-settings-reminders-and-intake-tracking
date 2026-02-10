@@ -49,6 +49,7 @@ export const RewardType = IDL.Variant({
   'hydrator' : IDL.Null,
 });
 export const UserRewards = IDL.Record({
+  'lastGoalCompleteDay' : IDL.Int,
   'streak' : IDL.Nat,
   'badges' : IDL.Vec(RewardType),
   'lastUpdated' : IDL.Int,
@@ -108,6 +109,7 @@ export const idlService = IDL.Service({
       [],
     ),
   'updateUserSettings' : IDL.Func([IDL.Float64, IDL.Float64], [], []),
+  'whoami' : IDL.Func([], [IDL.Principal], ['query']),
 });
 
 export const idlInitArgs = [];
@@ -154,6 +156,7 @@ export const idlFactory = ({ IDL }) => {
     'hydrator' : IDL.Null,
   });
   const UserRewards = IDL.Record({
+    'lastGoalCompleteDay' : IDL.Int,
     'streak' : IDL.Nat,
     'badges' : IDL.Vec(RewardType),
     'lastUpdated' : IDL.Int,
@@ -213,6 +216,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'updateUserSettings' : IDL.Func([IDL.Float64, IDL.Float64], [], []),
+    'whoami' : IDL.Func([], [IDL.Principal], ['query']),
   });
 };
 

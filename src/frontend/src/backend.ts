@@ -116,6 +116,7 @@ export interface AnalyticsMetrics {
     totalRunningEvents: bigint;
 }
 export interface UserRewards {
+    lastGoalCompleteDay: bigint;
     streak: bigint;
     badges: Array<RewardType>;
     lastUpdated: bigint;
@@ -192,6 +193,7 @@ export interface backendInterface {
      * / Hydration Tracking
      */
     updateUserSettings(dailyGoal: number, cupSize: number): Promise<void>;
+    whoami(): Promise<Principal>;
 }
 import type { RewardType as _RewardType, UserData as _UserData, UserProfile as _UserProfile, UserRewards as _UserRewards, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -546,6 +548,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async whoami(): Promise<Principal> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.whoami();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.whoami();
+            return result;
+        }
+    }
 }
 function from_candid_RewardType_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RewardType): RewardType {
     return from_candid_variant_n10(_uploadFile, _downloadFile, value);
@@ -563,17 +579,20 @@ function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
     return value.length === 0 ? null : value[0];
 }
 function from_candid_record_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    lastGoalCompleteDay: bigint;
     streak: bigint;
     badges: Array<_RewardType>;
     lastUpdated: bigint;
     completedGoals: bigint;
 }): {
+    lastGoalCompleteDay: bigint;
     streak: bigint;
     badges: Array<RewardType>;
     lastUpdated: bigint;
     completedGoals: bigint;
 } {
     return {
+        lastGoalCompleteDay: value.lastGoalCompleteDay,
         streak: value.streak,
         badges: from_candid_vec_n8(_uploadFile, _downloadFile, value.badges),
         lastUpdated: value.lastUpdated,

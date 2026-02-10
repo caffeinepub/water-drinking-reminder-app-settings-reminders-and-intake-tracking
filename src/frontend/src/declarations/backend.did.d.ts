@@ -49,6 +49,7 @@ export interface UserAnalyticsEntry {
 export interface UserData { 'dailyGoal' : number, 'cupSize' : number }
 export interface UserProfile { 'name' : string }
 export interface UserRewards {
+  'lastGoalCompleteDay' : bigint,
   'streak' : bigint,
   'badges' : Array<RewardType>,
   'lastUpdated' : bigint,
@@ -104,6 +105,7 @@ export interface _SERVICE {
    * / Hydration Tracking
    */
   'updateUserSettings' : ActorMethod<[number, number], undefined>,
+  'whoami' : ActorMethod<[], Principal>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

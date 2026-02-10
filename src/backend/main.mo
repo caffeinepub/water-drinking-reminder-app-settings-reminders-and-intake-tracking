@@ -1,17 +1,17 @@
 import Map "mo:core/Map";
 import List "mo:core/List";
 import Time "mo:core/Time";
-import Text "mo:core/Text";
-import Array "mo:core/Array";
 import Float "mo:core/Float";
-import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
-import Runtime "mo:core/Runtime";
-import AccessControl "authorization/access-control";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
+import Iter "mo:core/Iter";
+import Runtime "mo:core/Runtime";
+import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   // Access Control
   let accessControlState = AccessControl.initState();
@@ -77,6 +77,7 @@ actor {
     badges : [RewardType];
     completedGoals : Nat;
     lastUpdated : Int; // Day number of last streak update (not nanoseconds)
+    lastGoalCompleteDay : Int; // Day when last goal was completed (new field)
   };
 
   public type UserAnalytics = {
@@ -104,15 +105,60 @@ actor {
     sleepLogs : Nat;
   };
 
+  public type HydrationAndSleepSummary = {
+    today : {
+      intake : Float;
+      sleep : Float;
+      hasMetGoal : Bool;
+      hasMetSleepGoal : Bool;
+    };
+    week : [WeeklySummaryDay];
+    month : [MonthlySummaryDay];
+    historical : {
+      total : Float;
+      averagePerDay : Float;
+    };
+    reminders : {
+      water : Bool;
+      running : Bool;
+      custom : [CustomReminderDefinition];
+    };
+    streaks : {
+      hydrationStreak : Nat;
+      sleepStreak : Nat;
+      combinedStreak : Nat;
+      longestStreak : Nat;
+    };
+    badges : [RewardType];
+  };
+
+  public type WeeklySummaryDay = {
+    date : Int;
+    intake : Float;
+    sleep : Float;
+    metIntakeGoal : Bool;
+    metSleepGoal : Bool;
+    bothGoalsMet : Bool;
+  };
+
+  public type MonthlySummaryDay = {
+    date : Int;
+    intake : Float;
+    sleep : Float;
+    metIntakeGoal : Bool;
+    metSleepGoal : Bool;
+    bothGoalsMet : Bool;
+  };
+
   // Storage Maps
-  var userRewards = Map.empty<Principal, UserRewards>();
+  let userRewards = Map.empty<Principal, UserRewards>();
   let userProfiles = Map.empty<Principal, UserProfile>();
   let userData = Map.empty<Principal, UserData>();
   let runningLogs = Map.empty<Principal, List.List<RunningLog>>();
   let userIntakeHistory = Map.empty<Principal, List.List<HydrationLog>>();
   let customReminders = Map.empty<Principal, Map.Map<Text, CustomReminderDefinition>>();
   let sleepLogs = Map.empty<Principal, List.List<SleepLog>>();
-  var userAnalytics = Map.empty<Principal, UserAnalytics>();
+  let userAnalytics = Map.empty<Principal, UserAnalytics>();
 
   ///////////////////////////////////////////////////////////////////////////////
   // User Profile Management
@@ -126,7 +172,7 @@ actor {
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+    if (caller != user and not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Can only view your own profile");
     };
     userProfiles.get(user);
@@ -149,17 +195,26 @@ actor {
     };
     switch (userRewards.get(caller)) {
       case (?rewards) { rewards };
-      case (null) { { streak = 0; badges = []; completedGoals = 0; lastUpdated = 0 } };
+      case (null) {
+        {
+          streak = 0;
+          badges = [];
+          completedGoals = 0;
+          lastUpdated = 0;
+          lastGoalCompleteDay = 0;
+        };
+      };
     };
   };
 
-  func updateRewards(caller : Principal, streak : Nat, completedGoals : Nat, currentBadges : [RewardType], lastUpdatedDay : Int) {
+  func updateRewards(caller : Principal, streak : Nat, completedGoals : Nat, currentBadges : [RewardType], lastUpdatedDay : Int, lastGoalCompleteDay : Int) {
     let newBadges = currentBadges;
     let updatedRewards = {
       streak;
       badges = newBadges;
       completedGoals;
       lastUpdated = lastUpdatedDay;
+      lastGoalCompleteDay;
     };
     userRewards.add(caller, updatedRewards);
   };
@@ -314,7 +369,7 @@ actor {
     };
 
     userIntakeHistory.add(caller, intakeHistory);
-    updateStreak(caller, today);
+    processGoalCompletion(caller, today);
 
     // Update analytics
     let currentAnalytics = switch (userAnalytics.get(caller)) {
@@ -540,23 +595,21 @@ actor {
   // Streak calculation & completion tracking
   ////////////////////////////////////////////////////////////////////////
 
-  func updateStreak(caller : Principal, today : Int) {
+  func processGoalCompletion(caller : Principal, today : Int) {
     let todayIntake = getTodaysIntakeInternal(caller, today);
     let userSettings = getUserSettingsInternal(caller);
 
+    if (didCompleteGoal(todayIntake, userSettings)) {
+      updateRewardsOnGoalCompletion(caller, today);
+    } else {
+      maybeResetStreak(caller, today);
+    };
+  };
+
+  func didCompleteGoal(todayIntake : ?Float, userSettings : ?UserData) : Bool {
     switch (todayIntake, userSettings) {
-      case (?intake, ?settings) {
-        if (intake >= settings.dailyGoal) {
-          updateStreakInternal(caller, today);
-        } else {
-          // Goal not met today, check if we need to reset streak
-          checkAndResetStreak(caller, today);
-        };
-      };
-      case (_) {
-        // No intake or settings, check if we need to reset streak
-        checkAndResetStreak(caller, today);
-      };
+      case (?intake, ?settings) { intake >= settings.dailyGoal };
+      case (_) { false };
     };
   };
 
@@ -576,52 +629,96 @@ actor {
     userData.get(caller);
   };
 
-  func checkAndResetStreak(caller : Principal, today : Int) {
-    let currentReward = switch (userRewards.get(caller)) {
-      case (?rewards) { rewards };
-      case (null) { return }; // No rewards to reset
-    };
-
-    // If lastUpdated is not yesterday, reset streak to 0
-    if (currentReward.lastUpdated > 0 and today > currentReward.lastUpdated + 1) {
-      updateRewards(
-        caller,
-        0,
-        currentReward.completedGoals,
-        currentReward.badges,
-        today,
-      );
+  func maybeResetStreak(caller : Principal, today : Int) {
+    switch (userRewards.get(caller)) {
+      case (?rewards) {
+        if (todayExceedsStreakThreshold(rewards, today)) {
+          resetStreak(caller, rewards, today);
+        };
+      };
+      case (null) {}; // No rewards to reset
     };
   };
 
-  func updateStreakInternal(caller : Principal, today : Int) {
-    let currentReward = switch (userRewards.get(caller)) {
-      case (?rewards) { rewards };
-      case (null) { { streak = 0; badges = []; completedGoals = 0; lastUpdated = 0 } };
-    };
+  func todayExceedsStreakThreshold(rewards : UserRewards, today : Int) : Bool {
+    rewards.lastUpdated > 0 and today > rewards.lastUpdated + 1
+  };
 
-    // Calculate new streak based on consecutive days
-    let newStreak = if (currentReward.lastUpdated == 0) {
-      // First time logging
-      1;
-    } else if (today == currentReward.lastUpdated) {
-      // Same day, don't increment
-      currentReward.streak;
-    } else if (today == currentReward.lastUpdated + 1) {
-      // Consecutive day, increment
-      currentReward.streak + 1;
-    } else {
-      // Missed day(s), reset to 1
-      1;
-    };
-
+  func resetStreak(caller : Principal, rewards : UserRewards, today : Int) {
     updateRewards(
       caller,
-      newStreak,
-      currentReward.completedGoals + 1,
-      currentReward.badges,
+      0,
+      rewards.completedGoals,
+      rewards.badges,
       today,
+      rewards.lastGoalCompleteDay,
     );
+  };
+
+  func updateRewardsOnGoalCompletion(caller : Principal, today : Int) {
+    switch (userRewards.get(caller)) {
+      case (?rewards) {
+        if (not todayIsFirstCompletion(rewards, today)) { return };
+
+        let newStreak = calculateNewStreak(rewards, today);
+        let newBadges = determineNewBadges(rewards.badges, newStreak);
+        updateRewards(
+          caller,
+          newStreak,
+          rewards.completedGoals + 1,
+          newBadges,
+          today,
+          today,
+        );
+      };
+      case (null) {
+        updateRewards(
+          caller,
+          1,
+          1,
+          determineNewBadges([], 1),
+          today,
+          today,
+        );
+      };
+    };
+  };
+
+  func todayIsFirstCompletion(rewards : UserRewards, today : Int) : Bool {
+    rewards.lastGoalCompleteDay != today
+  };
+
+  func calculateNewStreak(rewards : UserRewards, today : Int) : Nat {
+    if (rewards.lastUpdated == 0) {
+      1;
+    } else if (today == rewards.lastUpdated) {
+      rewards.streak;
+    } else if (today == rewards.lastUpdated + 1) {
+      rewards.streak + 1;
+    } else {
+      1;
+    };
+  };
+
+  func determineNewBadges(currentBadges : [RewardType], newStreak : Nat) : [RewardType] {
+    let badgeForStreak = switch (newStreak) {
+      case (5) { ?#plastic_pirate };
+      case (10) { ?#runner };
+      case (15) { ?#hydrator };
+      case (30) { ?#sleepyhead };
+      case (_) { null };
+    };
+
+    switch (badgeForStreak) {
+      case (?badge) {
+        let badgeExists = currentBadges.find(func(b) { b == badge }) != null;
+        if (not badgeExists) {
+          return currentBadges.concat([badge]);
+        };
+      };
+      case (null) {};
+    };
+    currentBadges;
   };
 
   ///////////////////////////////////////////////
@@ -696,5 +793,9 @@ actor {
       }
     );
     userAnalyticsEntries;
+  };
+
+  public query ({ caller }) func whoami() : async Principal {
+    caller;
   };
 };

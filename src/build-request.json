@@ -1,40 +1,88 @@
 {
   "kind": "build_request",
-  "title": "Restore Admin Dashboard visibility by adding missing backend isCallerAdmin query",
-  "priority": "normal",
+  "title": "Fix streak, goal completion, and reward unlocking not updating",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement a public backend query method `isCallerAdmin() : async Bool` in `backend/main.mo` that returns whether the `caller` is an admin according to the existing access-control state (use `AccessControl.isAdmin(accessControlState, caller)`), so the frontend `useIsCallerAdmin()` hook can successfully determine admin status.",
+      "text": "Fix authorization/registration so that a newly signed-in user can create a profile and then successfully call core tracking methods (updateUserSettings, addDailyIntake, etc.) without hitting silent authorization failures.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-7",
-          "msg-6"
+          "msg-1"
         ],
         "quotes": [
-          "Fix it",
-          "The Admin Dashboard is still missing because the backend does **not** expose an `isCallerAdmin` function. The frontend calls `actor.isCallerAdmin()`, but this method does not exist in your Motoko canister, so the check always fails and the Admin tab stays hidden."
+          "Streaks are not getting added and goals are also not getting added and rewarding are not getting unlocked"
         ]
       },
       "acceptanceCriteria": [
-        "The canister exposes a callable `isCallerAdmin` query in the generated interface so that `actor.isCallerAdmin()` from `frontend/src/hooks/useQueries.ts` resolves successfully.",
-        "When signed in as a non-admin, `isCallerAdmin()` returns `false` (and does not trap).",
-        "When signed in as an admin/owner principal (as defined by the existing authorization mixin / access control), `isCallerAdmin()` returns `true`.",
-        "With the backend method added, the existing frontend logic in `frontend/src/App.tsx` shows the \"Admin\" tab when `isAdmin === true`, and the `AdminDashboard` view no longer fails due to a missing canister method."
+        "A first-time user can complete the in-app profile setup and then call updateUserSettings and addDailyIntake successfully (no traps for missing #user permission).",
+        "If the caller is not authorized, the frontend receives a clear error that can be surfaced (not a silent failure)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Ensure daily goal completion is persisted exactly once per day per user and reliably increments completedGoals and streak in UserRewards when the hydration goal is first met for that day.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Streaks are not getting added and goals are also not getting added and rewarding are not getting unlocked"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When a user’s total intake for the current day first reaches/exceeds dailyGoal, completedGoals increments by 1 and lastGoalCompleteDay is set to today.",
+        "Further addDailyIntake calls on the same day do not increment completedGoals again.",
+        "Streak increments by 1 when a goal is completed on consecutive days, resets to 1 when there is a gap, and stays unchanged when completing again on the same day."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Fix reward/badge unlocking so that newly earned rewards are added to UserRewards.badges and persist across refreshes, based on the latest streak/goal progression.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "rewarding are not getting unlocked"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When a streak threshold that corresponds to a badge is reached, that badge is appended to UserRewards.badges if not already present.",
+        "Unlocked badges remain in UserRewards.badges after page reload and future reward updates.",
+        "If the user already has a badge, reaching the same threshold again does not duplicate it."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Update the frontend intake/goal completion flow so that after adding intake (online), the UI reliably reflects the latest streak, completed goals, and unlocked badges without requiring a manual refresh, and surfaces backend errors to the user.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Streaks are not getting added and goals are also not getting added and rewarding are not getting unlocked"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After a successful addDailyIntake call, the UI updates the streak and completed-goals counts and shows newly unlocked badges (if any) without a manual refresh.",
+        "If addDailyIntake or updateUserSettings fails due to authorization or other backend errors, the user sees an English error message (e.g., via toast/banner) indicating the action did not save.",
+        "If the action is queued due to offline mode, the UI clearly indicates it was queued and does not incorrectly show newly unlocked rewards until the sync completes."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor (all logic in `backend/main.mo`).",
-    "Do not modify files under `frontend/src/components/ui` or other frontend immutable paths listed in SYSTEM_CONTEXT.",
-    "Use English for any user-facing text (no new user-facing text is required for this fix)."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional canisters/services).",
+    "Do not modify files in frontend immutablePaths (frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui)."
   ],
   "nonGoals": [
-    "Do not redesign the Admin Dashboard UI.",
-    "Do not change the existing admin authorization model/role assignments; only expose the missing admin-status query.",
-    "Do not add new authentication providers beyond Internet Identity.",
-    "Do not implement new analytics endpoints; only fix the missing `isCallerAdmin` method required by the existing frontend."
+    "Add new reward types beyond the existing RewardType variants.",
+    "Implement third-party authentication providers (only Internet Identity is supported).",
+    "Add real-time features (WebSockets/push)."
   ],
   "imageRequirements": {
     "required": [],

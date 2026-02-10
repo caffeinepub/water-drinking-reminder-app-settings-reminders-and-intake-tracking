@@ -1,32 +1,69 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T15:17:44.973Z",
+  "generatedAt": "2026-02-10T18:16:04.740Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 0,
+    "total": 4,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Implement a public backend query method `isCallerAdmin() : async Bool` in `backend/main.mo` that returns whether the `caller` is an admin according to the existing access-control state (use `AccessControl.isAdmin(accessControlState, caller)`), so the frontend `useIsCallerAdmin()` hook can successfully determine admin status.",
+        "summary": "Fix authorization/registration so that a newly signed-in user can create a profile and then successfully call core tracking methods (updateUserSettings, addDailyIntake, etc.) without hitting silent authorization failures.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Ensure daily goal completion is persisted exactly once per day per user and reliably increments completedGoals and streak in UserRewards when the hydration goal is first met for that day.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Fix reward/badge unlocking so that newly earned rewards are added to UserRewards.badges and persist across refreshes, based on the latest streak/goal progression.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Update the frontend intake/goal completion flow so that after adding intake (online), the UI reliably reflects the latest streak, completed goals, and unlocked badges without requiring a manual refresh, and surfaces backend errors to the user.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/utils/backendError.ts",
+          "frontend/src/components/intake/QuickAddIntake.tsx",
+          "frontend/src/components/settings/SettingsForm.tsx",
+          "frontend/src/offline/OfflineSyncProvider.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/utils/backendError.ts",
+          "frontend/src/components/intake/QuickAddIntake.tsx",
+          "frontend/src/components/settings/SettingsForm.tsx",
+          "frontend/src/offline/OfflineSyncProvider.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
+    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
+    "frontend/src/components/intake/QuickAddIntake.tsx",
+    "frontend/src/components/settings/SettingsForm.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/offline/OfflineSyncProvider.tsx",
+    "frontend/src/utils/backendError.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -8,7 +8,7 @@ import { History, TrendingUp, TrendingDown, Sparkles } from 'lucide-react';
 export default function HistoryView() {
   const { data: history = [], isLoading } = useGetIntakeHistory();
   const { data: settings } = useGetUserSettings();
-  const { isOfflineData, cachedAt } = useIsOfflineData(['intakeHistory']);
+  const { isOfflineData, cachedAt } = useIsOfflineData('intakeHistory');
 
   const dailyGoal = settings?.dailyGoal || 2000;
 
@@ -108,15 +108,11 @@ export default function HistoryView() {
                         </div>
                         <Progress 
                           value={progress} 
-                          className={`h-2.5 ${metGoal ? 'bg-success/20' : ''}`}
+                          className={`h-2.5 ${metGoal ? '[&>div]:bg-success' : ''}`}
                         />
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs text-muted-foreground">
-                            {Math.round(progress)}% of daily goal
-                          </p>
-                          {metGoal && (
-                            <span className="text-xs font-medium text-success">Goal hit! 🎯</span>
-                          )}
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>{Math.round(progress)}% of goal</span>
+                          <span>{dailyGoal} ml goal</span>
                         </div>
                       </div>
                     );
@@ -127,7 +123,8 @@ export default function HistoryView() {
 
             {history.length === 0 && isOfflineData && (
               <div className="text-center py-8 text-muted-foreground">
-                <p>No cached history available</p>
+                <p>No cached history available offline.</p>
+                <p className="text-sm mt-2">Connect to the internet to load your data.</p>
               </div>
             )}
           </div>

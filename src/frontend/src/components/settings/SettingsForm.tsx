@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useGetUserSettings, useUpdateUserSettings } from '../../hooks/useQueries';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { useOfflinePreference } from '../../offline/useOfflinePreference';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Settings, Droplet, Coffee } from 'lucide-react';
 import { toast } from 'sonner';
-import { Settings, Save, WifiOff } from 'lucide-react';
+import { normalizeBackendError } from '../../utils/backendError';
 
 export default function SettingsForm() {
   const { data: settings, isLoading } = useGetUserSettings();
-  const updateSettings = useUpdateUserSettings();
+  const updateMutation = useUpdateUserSettings();
+  const isOnline = useOnlineStatus();
   const { enabled: offlineEnabled, setEnabled: setOfflineEnabled } = useOfflinePreference();
-  
+
   const [dailyGoal, setDailyGoal] = useState('2000');
   const [cupSize, setCupSize] = useState('250');
 
@@ -26,39 +29,47 @@ export default function SettingsForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const goalNum = parseFloat(dailyGoal);
-    const cupNum = parseFloat(cupSize);
-    
-    if (isNaN(goalNum) || goalNum <= 0) {
-      toast.error('Please enter a valid daily goal');
-      return;
-    }
-    
-    if (isNaN(cupNum) || cupNum <= 0) {
-      toast.error('Please enter a valid cup size');
+
+    const goalValue = parseFloat(dailyGoal);
+    const cupValue = parseFloat(cupSize);
+
+    if (isNaN(goalValue) || goalValue <= 0) {
+      toast.error('Invalid daily goal', {
+        description: 'Please enter a valid number greater than 0.',
+      });
       return;
     }
 
-    try {
-      const result = await updateSettings.mutateAsync({
-        dailyGoal: goalNum,
-        cupSize: cupNum,
+    if (isNaN(cupValue) || cupValue <= 0) {
+      toast.error('Invalid cup size', {
+        description: 'Please enter a valid number greater than 0.',
       });
-      
-      // Check if action was queued for offline
-      if (result?.queued) {
-        toast.success('Saved offline. Will sync when back online.', {
-          description: 'Your settings will update when you reconnect',
-        });
-      } else {
-        toast.success('Settings saved! Looking fresh! ✨', {
-          description: 'Your preferences have been updated',
+      return;
+    }
+
+    if (!isOnline) {
+      toast.info('Queued for sync', {
+        description: 'Your settings will be saved when you\'re back online.',
+      });
+    }
+
+    try {
+      await updateMutation.mutateAsync({
+        dailyGoal: goalValue,
+        cupSize: cupValue,
+      });
+
+      if (isOnline) {
+        toast.success('Settings saved!', {
+          description: 'Your preferences have been updated.',
         });
       }
     } catch (error) {
-      toast.error('Failed to save settings');
-      console.error(error);
+      const errorMessage = normalizeBackendError(error);
+      toast.error('Failed to save settings', {
+        description: errorMessage,
+      });
+      console.error('Error updating settings:', error);
     }
   };
 
@@ -66,7 +77,7 @@ export default function SettingsForm() {
     return (
       <Card className="border-2 shadow-lg">
         <CardContent className="pt-6">
-          <div className="h-64 flex items-center justify-center">
+          <div className="h-32 flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         </CardContent>
@@ -76,82 +87,70 @@ export default function SettingsForm() {
 
   return (
     <Card className="border-2 shadow-lg">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <Settings className="w-5 h-5 text-primary" />
           Settings
         </CardTitle>
-        <CardDescription>
-          Customize your hydration tracking experience
-        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="dailyGoal">Daily Goal (ml)</Label>
+              <Label htmlFor="dailyGoal" className="flex items-center gap-2">
+                <Droplet className="w-4 h-4 text-primary" />
+                Daily Goal (ml)
+              </Label>
               <Input
                 id="dailyGoal"
                 type="number"
                 value={dailyGoal}
                 onChange={(e) => setDailyGoal(e.target.value)}
-                min="100"
+                placeholder="2000"
+                min="1"
                 step="100"
-                required
               />
-              <p className="text-xs text-muted-foreground">
-                Recommended: 2000-3000 ml per day
-              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cupSize">Default Cup Size (ml)</Label>
+              <Label htmlFor="cupSize" className="flex items-center gap-2">
+                <Coffee className="w-4 h-4 text-primary" />
+                Default Cup Size (ml)
+              </Label>
               <Input
                 id="cupSize"
                 type="number"
                 value={cupSize}
                 onChange={(e) => setCupSize(e.target.value)}
-                min="50"
+                placeholder="250"
+                min="1"
                 step="50"
-                required
               />
-              <p className="text-xs text-muted-foreground">
-                Your typical glass or bottle size
-              </p>
             </div>
 
-            <div className="pt-4 border-t">
-              <div className="space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="offline-mode" className="text-base font-semibold cursor-pointer">
-                        Save for offline use
-                      </Label>
-                      <WifiOff className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      When enabled, your logs are saved locally when offline and automatically synced when you reconnect. 
-                      Cached data from your last connection is shown while offline.
-                    </p>
-                  </div>
-                  <Switch
-                    id="offline-mode"
-                    checked={offlineEnabled}
-                    onCheckedChange={setOfflineEnabled}
-                  />
-                </div>
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border-2">
+              <div className="space-y-0.5">
+                <Label htmlFor="offline-mode" className="text-sm font-medium">
+                  Save for offline use
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Cache data locally and queue actions when offline
+                </p>
               </div>
+              <Switch
+                id="offline-mode"
+                checked={offlineEnabled}
+                onCheckedChange={setOfflineEnabled}
+              />
             </div>
           </div>
 
-          <Button 
-            type="submit" 
-            disabled={updateSettings.isPending}
-            className="w-full border-2 shadow-glow hover:shadow-glow-lg transition-all"
+          <Button
+            type="submit"
+            disabled={updateMutation.isPending}
+            className="w-full"
           >
-            <Save className="w-4 h-4 mr-2" />
-            {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
+            {updateMutation.isPending ? 'Saving...' : 'Save Settings'}
           </Button>
         </form>
       </CardContent>

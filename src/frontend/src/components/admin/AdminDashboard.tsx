@@ -1,119 +1,126 @@
-import { useIsCallerAdmin, useGetAnalyticsMetrics, useGetAllUserAnalytics } from '../../hooks/useQueries';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useGetAnalyticsMetrics, useGetAllUserAnalytics } from '../../hooks/useQueries';
 import AdminAnalyticsSummary from './AdminAnalyticsSummary';
 import AdminUserAnalyticsTable from './AdminUserAnalyticsTable';
+import AdminDebugInfo from './AdminDebugInfo';
+import { AlertCircle, ShieldAlert } from 'lucide-react';
 
-export default function AdminDashboard() {
-  const { data: isAdmin, isLoading: adminCheckLoading, error: adminCheckError } = useIsCallerAdmin();
+interface AdminDashboardProps {
+  isAdmin: boolean;
+}
+
+export default function AdminDashboard({ isAdmin }: AdminDashboardProps) {
   const { data: metrics, isLoading: metricsLoading, error: metricsError } = useGetAnalyticsMetrics();
-  const { data: userAnalytics, isLoading: userAnalyticsLoading, error: userAnalyticsError } = useGetAllUserAnalytics();
+  const { data: userAnalytics = [], isLoading: analyticsLoading, error: analyticsError } = useGetAllUserAnalytics();
 
-  if (adminCheckLoading) {
-    return (
-      <div className="space-y-6">
-        <Card className="border-2 shadow-glow">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-primary" />
-              Admin Dashboard
-            </CardTitle>
-            <CardDescription>Verifying admin permissions...</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (adminCheckError) {
-    return (
-      <div className="space-y-6">
-        <Card className="border-2 shadow-glow">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-primary" />
-              Admin Dashboard
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Admin status could not be verified. Please check your connection and try again.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  // Show unauthorized message for non-admins
   if (!isAdmin) {
     return (
-      <div className="space-y-6">
-        <Card className="border-2 shadow-glow">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-primary" />
-              Admin Dashboard
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                You do not have permission to access the admin dashboard. This area is restricted to administrators only.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="border-2 shadow-lg bg-card/50 backdrop-blur-sm">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center space-y-4">
+              <ShieldAlert className="w-16 h-16 text-warning mx-auto" />
+              <div>
+                <p className="text-lg font-semibold text-foreground">Unauthorized Access</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  This section is only accessible to administrators.
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  const isLoading = metricsLoading || userAnalyticsLoading;
-  const hasError = metricsError || userAnalyticsError;
+  const isLoading = metricsLoading || analyticsLoading;
+  const hasError = metricsError || analyticsError;
+
+  // Check if error message indicates authorization issue
+  const isAuthError = (error: any) => {
+    const message = error?.message || '';
+    return message.toLowerCase().includes('unauthorized') || message.toLowerCase().includes('only admins');
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="border-2 shadow-lg bg-card/50 backdrop-blur-sm">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-muted-foreground">Loading admin dashboard...</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (hasError) {
+    const error = metricsError || analyticsError;
+    const showUnauthorized = isAuthError(error);
+
+    return (
+      <Card className="border-2 shadow-lg bg-card/50 backdrop-blur-sm">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center space-y-4">
+              {showUnauthorized ? (
+                <>
+                  <ShieldAlert className="w-16 h-16 text-warning mx-auto" />
+                  <div>
+                    <p className="text-lg font-semibold text-foreground">Unauthorized Access</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      You do not have permission to view admin data.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-16 h-16 text-destructive mx-auto" />
+                  <div>
+                    <p className="text-lg font-semibold text-destructive">Failed to load admin data</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {error?.message || 'An error occurred'}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <Card className="border-2 shadow-lg bg-card/50 backdrop-blur-sm">
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground py-12">
+            No metrics available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <Card className="border-2 shadow-glow bg-gradient-to-br from-card via-card to-primary/5">
+      <Card className="border-2 shadow-lg bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-2xl">
-            <Shield className="w-6 h-6 text-primary" />
-            Admin Dashboard
-          </CardTitle>
-          <CardDescription>Analytics and user activity overview</CardDescription>
+          <CardTitle className="text-2xl">Admin Dashboard</CardTitle>
+          <CardDescription>View analytics and manage users</CardDescription>
         </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-
-          {hasError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Failed to load analytics data. Please try again later.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {!isLoading && !hasError && metrics && userAnalytics && (
-            <div className="space-y-8">
-              <AdminAnalyticsSummary metrics={metrics} />
-              <AdminUserAnalyticsTable userAnalytics={userAnalytics} />
-            </div>
-          )}
+        <CardContent className="space-y-6">
+          <AdminAnalyticsSummary metrics={metrics} />
+          <AdminUserAnalyticsTable userAnalytics={userAnalytics} />
         </CardContent>
       </Card>
+      
+      <AdminDebugInfo />
     </div>
   );
 }

@@ -1,32 +1,51 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project includes an Admin Dashboard gated by admin access logic; backend must expose an isCallerAdmin query used by the frontend to show the Admin tab.",
-  "architectural_notes": [
-    "Frontend admin tab visibility depends on backend query actor.isCallerAdmin(); backend should expose public query isCallerAdmin() returning AccessControl.isAdmin(state, caller)."
-  ],
+  "summary": "Goal/streak tracking app with rewards that unlock on goal completion.",
+  "architectural_notes": [],
   "known_issues": [
-    "Admin Dashboard not visible because frontend calls actor.isCallerAdmin() but backend does not implement it, causing admin check to fail."
+    "Streaks are not being added/recorded.",
+    "Goals are not being added/created.",
+    "Rewards are not unlocking (likely tied to goal completion logic)."
   ],
   "isFixRequest": true,
-  "existing_features": [],
+  "existing_features": [
+    {
+      "id": "feature-update-the-frontend-intake-goal-completion-flow-so-that-after-adding-intake-online-the-ui-reliably-reflects-the-latest-streak-completed-goals-and-unlocked-badges-without-requiring-a-manual-refresh-and-surfaces-backend-errors-to-the-user",
+      "title": "Update the frontend intake/goal completion flow so that after adding intake (online), the UI reliably reflects the latest streak, completed goals, and unlocked badges without requiring a manual refresh, and surfaces backend errors to the user.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    }
+  ],
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add backend isCallerAdmin() query so frontend can correctly show Admin Dashboard for admins/owner",
-      "reqIds": [],
-      "status": "in_progress"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Implement a public backend query method `isCallerAdmin() : async Bool` in `backend/main.mo` that returns whether the `caller` is an admin according to the existing access-control state (use `AccessControl.isAdmin(accessControlState, caller)`), so the frontend `useIsCallerAdmin()` hook can successfully determine admin status.",
+      "summary": "Fix authorization/registration so that a newly signed-in user can create a profile and then successfully call core tracking methods (updateUserSettings, addDailyIntake, etc.) without hitting silent authorization failures.",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Ensure daily goal completion is persisted exactly once per day per user and reliably increments completedGoals and streak in UserRewards when the hydration goal is first met for that day.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Fix reward/badge unlocking so that newly earned rewards are added to UserRewards.badges and persist across refreshes, based on the latest streak/goal progression.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
     }
   ],
-  "projectName": "Restore Admin Dashboard visibility by adding missing backend isCallerAdmin query",
+  "projectName": "Fix streak, goal completion, and reward unlocking not updating",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

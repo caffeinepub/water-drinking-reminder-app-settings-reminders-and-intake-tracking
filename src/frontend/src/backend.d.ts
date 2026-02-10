@@ -34,6 +34,7 @@ export interface AnalyticsMetrics {
     totalRunningEvents: bigint;
 }
 export interface UserRewards {
+    lastGoalCompleteDay: bigint;
     streak: bigint;
     badges: Array<RewardType>;
     lastUpdated: bigint;
@@ -109,4 +110,5 @@ export interface backendInterface {
      * / Hydration Tracking
      */
     updateUserSettings(dailyGoal: number, cupSize: number): Promise<void>;
+    whoami(): Promise<Principal>;
 }

@@ -3,18 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowUpDown, User } from 'lucide-react';
+import { Search, ArrowUpDown, User, Eye } from 'lucide-react';
 import type { UserAnalyticsEntry } from '../../backend';
+import type { Principal } from '@dfinity/principal';
 import { formatBigIntCount, formatLastActiveDay } from '../../utils/analyticsFormat';
 
 interface AdminUserAnalyticsTableProps {
   userAnalytics: UserAnalyticsEntry[];
+  onSelectUser?: (principal: Principal) => void;
 }
 
 type SortField = 'profileName' | 'issuedDay' | 'hydrationLogs' | 'runningLogs' | 'sleepLogs';
 type SortDirection = 'asc' | 'desc';
 
-export default function AdminUserAnalyticsTable({ userAnalytics }: AdminUserAnalyticsTableProps) {
+export default function AdminUserAnalyticsTable({ userAnalytics, onSelectUser }: AdminUserAnalyticsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('issuedDay');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -150,12 +152,13 @@ export default function AdminUserAnalyticsTable({ userAnalytics }: AdminUserAnal
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
+                  {onSelectUser && <TableHead className="text-center">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAndSortedData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={onSelectUser ? 7 : 6} className="text-center py-8 text-muted-foreground">
                       {searchTerm ? 'No users found matching your search.' : 'No user data available yet.'}
                     </TableCell>
                   </TableRow>
@@ -191,6 +194,18 @@ export default function AdminUserAnalyticsTable({ userAnalytics }: AdminUserAnal
                           {formatBigIntCount(user.runningLogs)}
                         </span>
                       </TableCell>
+                      {onSelectUser && (
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onSelectUser(user.principal)}
+                            className="hover:bg-primary/10"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
