@@ -1,16 +1,16 @@
 import Map "mo:core/Map";
 import List "mo:core/List";
 import Time "mo:core/Time";
-import Float "mo:core/Float";
 import Principal "mo:core/Principal";
-import Int "mo:core/Int";
 import Nat "mo:core/Nat";
+import Int "mo:core/Int";
 import Iter "mo:core/Iter";
-import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import Migration "migration";
+import Runtime "mo:core/Runtime";
 
+// Apply data migration on upgrade
 (with migration = Migration.run)
 actor {
   // Access Control
@@ -30,11 +30,11 @@ actor {
   };
 
   public type RunningLog = {
-    distance : Float; // Distance in kilometers
-    time : Int; // Time in nanoseconds
-    pace : Float; // Average pace (minutes per km)
-    timestamp : Int; // Timestamp in nanoseconds
-    completed : Bool; // Indicates if the run was completed
+    distance : Float;
+    time : Int;
+    pace : Float;
+    timestamp : Int;
+    completed : Bool;
   };
 
   public type DailyIntake = {
@@ -43,8 +43,8 @@ actor {
   };
 
   public type UserData = {
-    dailyGoal : Float; // ml
-    cupSize : Float; // ml
+    dailyGoal : Float;
+    cupSize : Float;
   };
 
   public type HydrationLog = {
@@ -60,9 +60,9 @@ actor {
   public type CustomReminderDefinition = {
     name : Text;
     description : Text;
-    intervalInNanos : Int; // Reminder interval in nanoseconds
-    lastSent : Int; // Last sent timestamp in nanoseconds
-    enabled : Bool; // Whether the reminder is enabled
+    intervalInNanos : Int;
+    lastSent : Int;
+    enabled : Bool;
   };
 
   public type ReminderType = {
@@ -76,78 +76,29 @@ actor {
     streak : Nat;
     badges : [RewardType];
     completedGoals : Nat;
-    lastUpdated : Int; // Day number of last streak update (not nanoseconds)
-    lastGoalCompleteDay : Int; // Day when last goal was completed (new field)
+    lastUpdated : Int;
+    lastGoalCompleteDay : Int;
   };
 
   public type UserAnalytics = {
     totalHydrationLogs : Nat;
     totalRunningLogs : Nat;
     totalSleepLogs : Nat;
-    lastActiveDay : Int; // Day in nanoseconds when last active
   };
 
   public type AnalyticsMetrics = {
     totalUniqueUsers : Nat;
-    dailyActiveUsers : Nat;
-    weeklyActiveUsers : Nat;
     totalHydrationEvents : Nat;
     totalRunningEvents : Nat;
     totalSleepEvents : Nat;
   };
 
-  public type UserAnalyticsEntry = {
+  public type UserActivitySummary = {
     principal : Principal;
     profileName : Text;
-    issuedDay : Int;
     hydrationLogs : Nat;
     runningLogs : Nat;
     sleepLogs : Nat;
-  };
-
-  public type HydrationAndSleepSummary = {
-    today : {
-      intake : Float;
-      sleep : Float;
-      hasMetGoal : Bool;
-      hasMetSleepGoal : Bool;
-    };
-    week : [WeeklySummaryDay];
-    month : [MonthlySummaryDay];
-    historical : {
-      total : Float;
-      averagePerDay : Float;
-    };
-    reminders : {
-      water : Bool;
-      running : Bool;
-      custom : [CustomReminderDefinition];
-    };
-    streaks : {
-      hydrationStreak : Nat;
-      sleepStreak : Nat;
-      combinedStreak : Nat;
-      longestStreak : Nat;
-    };
-    badges : [RewardType];
-  };
-
-  public type WeeklySummaryDay = {
-    date : Int;
-    intake : Float;
-    sleep : Float;
-    metIntakeGoal : Bool;
-    metSleepGoal : Bool;
-    bothGoalsMet : Bool;
-  };
-
-  public type MonthlySummaryDay = {
-    date : Int;
-    intake : Float;
-    sleep : Float;
-    metIntakeGoal : Bool;
-    metSleepGoal : Bool;
-    bothGoalsMet : Bool;
   };
 
   // Storage Maps
@@ -207,16 +158,87 @@ actor {
     };
   };
 
-  func updateRewards(caller : Principal, streak : Nat, completedGoals : Nat, currentBadges : [RewardType], lastUpdatedDay : Int, lastGoalCompleteDay : Int) {
-    let newBadges = currentBadges;
-    let updatedRewards = {
-      streak;
-      badges = newBadges;
-      completedGoals;
-      lastUpdated = lastUpdatedDay;
-      lastGoalCompleteDay;
+  public shared ({ caller }) func completeDailyGoal() : async UserRewards {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can complete daily goals");
     };
-    userRewards.add(caller, updatedRewards);
+
+    let today = Time.now() / 86400000000000;
+    let streakNeedsReset = switch (userRewards.get(caller)) {
+      case (?rewards) {
+        rewards.lastUpdated > 0 and today > rewards.lastUpdated + 1
+      };
+      case (null) { false };
+    };
+
+    let newRewards = switch (userRewards.get(caller)) {
+      case (?rewards) {
+        {
+          streak = if (streakNeedsReset) { 1 } else {
+            if (todayIsFirstCompletion(rewards, today)) {
+              calculateNewStreak(rewards, today);
+            } else { rewards.streak };
+          };
+          completedGoals = if (todayIsFirstCompletion(rewards, today)) {
+            rewards.completedGoals + 1;
+          } else { rewards.completedGoals };
+          badges = if (todayIsFirstCompletion(rewards, today)) {
+            determineNewBadges(rewards.badges, calculateNewStreak(rewards, today));
+          } else { rewards.badges };
+          lastUpdated = today;
+          lastGoalCompleteDay = today;
+        };
+      };
+      case (null) {
+        {
+          streak = 1;
+          badges = [];
+          completedGoals = 1;
+          lastUpdated = today;
+          lastGoalCompleteDay = today;
+        };
+      };
+    };
+
+    userRewards.add(caller, newRewards);
+    newRewards;
+  };
+
+  func todayIsFirstCompletion(rewards : UserRewards, today : Int) : Bool {
+    rewards.lastGoalCompleteDay != today
+  };
+
+  func calculateNewStreak(rewards : UserRewards, today : Int) : Nat {
+    if (rewards.lastUpdated == 0) {
+      1;
+    } else if (today == rewards.lastUpdated) {
+      rewards.streak;
+    } else if (today == rewards.lastUpdated + 1) {
+      rewards.streak + 1;
+    } else {
+      1;
+    };
+  };
+
+  func determineNewBadges(currentBadges : [RewardType], newStreak : Nat) : [RewardType] {
+    let badgeForStreak = switch (newStreak) {
+      case (5) { ?#plastic_pirate };
+      case (10) { ?#runner };
+      case (15) { ?#hydrator };
+      case (30) { ?#sleepyhead };
+      case (_) { null };
+    };
+
+    switch (badgeForStreak) {
+      case (?badge) {
+        let badgeExists = currentBadges.find(func(b) { b == badge }) != null;
+        if (not badgeExists) {
+          return currentBadges.concat([badge]);
+        };
+      };
+      case (null) {};
+    };
+    currentBadges;
   };
 
   //////////////////////////////////////////////////////////////////////
@@ -264,12 +286,11 @@ actor {
     // Update analytics
     let currentAnalytics = switch (userAnalytics.get(caller)) {
       case (?analytics) { analytics };
-      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0; lastActiveDay = today } };
+      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0 } };
     };
     let updatedAnalytics = {
       currentAnalytics with
-      totalSleepLogs = currentAnalytics.totalSleepLogs + 1;
-      lastActiveDay = today;
+      totalSleepLogs = currentAnalytics.totalSleepLogs + 1
     };
     userAnalytics.add(caller, updatedAnalytics);
   };
@@ -296,12 +317,9 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access sleep history");
     };
-
     switch (sleepLogs.get(caller)) {
       case (null) { [] };
-      case (?logs) {
-        logs.toArray();
-      };
+      case (?logs) { logs.toArray() };
     };
   };
 
@@ -369,17 +387,15 @@ actor {
     };
 
     userIntakeHistory.add(caller, intakeHistory);
-    processGoalCompletion(caller, today);
 
     // Update analytics
     let currentAnalytics = switch (userAnalytics.get(caller)) {
       case (?analytics) { analytics };
-      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0; lastActiveDay = today } };
+      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0 } };
     };
     let updatedAnalytics = {
       currentAnalytics with
-      totalHydrationLogs = currentAnalytics.totalHydrationLogs + 1;
-      lastActiveDay = today;
+      totalHydrationLogs = currentAnalytics.totalHydrationLogs + 1
     };
     userAnalytics.add(caller, updatedAnalytics);
   };
@@ -450,15 +466,13 @@ actor {
     runningLogs.add(caller, currentLogs);
 
     // Update analytics
-    let todayDay = Time.now() / 86400000000000;
     let currentAnalytics = switch (userAnalytics.get(caller)) {
       case (?analytics) { analytics };
-      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0; lastActiveDay = todayDay } };
+      case (null) { { totalHydrationLogs = 0; totalRunningLogs = 0; totalSleepLogs = 0 } };
     };
     let updatedAnalytics = {
       currentAnalytics with
-      totalRunningLogs = currentAnalytics.totalRunningLogs + 1;
-      lastActiveDay = todayDay;
+      totalRunningLogs = currentAnalytics.totalRunningLogs + 1
     };
     userAnalytics.add(caller, updatedAnalytics);
   };
@@ -591,136 +605,6 @@ actor {
     reminderMap.values().toArray();
   };
 
-  ////////////////////////////////////////////////////////////////////////
-  // Streak calculation & completion tracking
-  ////////////////////////////////////////////////////////////////////////
-
-  func processGoalCompletion(caller : Principal, today : Int) {
-    let todayIntake = getTodaysIntakeInternal(caller, today);
-    let userSettings = getUserSettingsInternal(caller);
-
-    if (didCompleteGoal(todayIntake, userSettings)) {
-      updateRewardsOnGoalCompletion(caller, today);
-    } else {
-      maybeResetStreak(caller, today);
-    };
-  };
-
-  func didCompleteGoal(todayIntake : ?Float, userSettings : ?UserData) : Bool {
-    switch (todayIntake, userSettings) {
-      case (?intake, ?settings) { intake >= settings.dailyGoal };
-      case (_) { false };
-    };
-  };
-
-  func getTodaysIntakeInternal(caller : Principal, today : Int) : ?Float {
-    switch (userIntakeHistory.get(caller)) {
-      case (null) { null };
-      case (?logs) {
-        switch (logs.find(func(log) { log.date == today })) {
-          case (null) { null };
-          case (?log) { ?log.totalIntake };
-        };
-      };
-    };
-  };
-
-  func getUserSettingsInternal(caller : Principal) : ?UserData {
-    userData.get(caller);
-  };
-
-  func maybeResetStreak(caller : Principal, today : Int) {
-    switch (userRewards.get(caller)) {
-      case (?rewards) {
-        if (todayExceedsStreakThreshold(rewards, today)) {
-          resetStreak(caller, rewards, today);
-        };
-      };
-      case (null) {}; // No rewards to reset
-    };
-  };
-
-  func todayExceedsStreakThreshold(rewards : UserRewards, today : Int) : Bool {
-    rewards.lastUpdated > 0 and today > rewards.lastUpdated + 1
-  };
-
-  func resetStreak(caller : Principal, rewards : UserRewards, today : Int) {
-    updateRewards(
-      caller,
-      0,
-      rewards.completedGoals,
-      rewards.badges,
-      today,
-      rewards.lastGoalCompleteDay,
-    );
-  };
-
-  func updateRewardsOnGoalCompletion(caller : Principal, today : Int) {
-    switch (userRewards.get(caller)) {
-      case (?rewards) {
-        if (not todayIsFirstCompletion(rewards, today)) { return };
-
-        let newStreak = calculateNewStreak(rewards, today);
-        let newBadges = determineNewBadges(rewards.badges, newStreak);
-        updateRewards(
-          caller,
-          newStreak,
-          rewards.completedGoals + 1,
-          newBadges,
-          today,
-          today,
-        );
-      };
-      case (null) {
-        updateRewards(
-          caller,
-          1,
-          1,
-          determineNewBadges([], 1),
-          today,
-          today,
-        );
-      };
-    };
-  };
-
-  func todayIsFirstCompletion(rewards : UserRewards, today : Int) : Bool {
-    rewards.lastGoalCompleteDay != today
-  };
-
-  func calculateNewStreak(rewards : UserRewards, today : Int) : Nat {
-    if (rewards.lastUpdated == 0) {
-      1;
-    } else if (today == rewards.lastUpdated) {
-      rewards.streak;
-    } else if (today == rewards.lastUpdated + 1) {
-      rewards.streak + 1;
-    } else {
-      1;
-    };
-  };
-
-  func determineNewBadges(currentBadges : [RewardType], newStreak : Nat) : [RewardType] {
-    let badgeForStreak = switch (newStreak) {
-      case (5) { ?#plastic_pirate };
-      case (10) { ?#runner };
-      case (15) { ?#hydrator };
-      case (30) { ?#sleepyhead };
-      case (_) { null };
-    };
-
-    switch (badgeForStreak) {
-      case (?badge) {
-        let badgeExists = currentBadges.find(func(b) { b == badge }) != null;
-        if (not badgeExists) {
-          return currentBadges.concat([badge]);
-        };
-      };
-      case (null) {};
-    };
-    currentBadges;
-  };
-
   ///////////////////////////////////////////////
   // Analytics Tracking
   ///////////////////////////////////////////////
@@ -730,25 +614,11 @@ actor {
       Runtime.trap("Unauthorized: Only admins can access analytics");
     };
 
-    let now = Time.now() / 86400000000000; // Current day
-
-    let allValues = userAnalytics.values().toArray();
-
-    let dailyActiveUsers = allValues.filter(
-      func(user) {
-        Int.abs(user.lastActiveDay - now) <= 1;
-      }
-    ).size();
-
-    let weeklyActiveUsers = allValues.filter(
-      func(user) {
-        Int.abs(user.lastActiveDay - now) <= 7;
-      }
-    ).size();
-
     var totalHydration = 0;
     var totalRunning = 0;
     var totalSleep = 0;
+
+    let allValues = userAnalytics.values().toArray();
 
     allValues.forEach(
       func(user) {
@@ -760,22 +630,20 @@ actor {
 
     {
       totalUniqueUsers = userAnalytics.size();
-      dailyActiveUsers;
-      weeklyActiveUsers;
       totalHydrationEvents = totalHydration;
       totalRunningEvents = totalRunning;
       totalSleepEvents = totalSleep;
     };
   };
 
-  public shared ({ caller }) func getAllUserAnalytics() : async [UserAnalyticsEntry] {
+  public shared ({ caller }) func getAllUserAnalytics() : async [UserActivitySummary] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can access analytics");
     };
 
     let entries = userAnalytics.toArray();
 
-    let userAnalyticsEntries = entries.map(
+    let activitySummaries = entries.map(
       func((principal, analytics)) {
         {
           principal;
@@ -785,14 +653,13 @@ actor {
               "Unknown";
             };
           };
-          issuedDay = analytics.lastActiveDay;
           hydrationLogs = analytics.totalHydrationLogs;
           runningLogs = analytics.totalRunningLogs;
           sleepLogs = analytics.totalSleepLogs;
         };
       }
     );
-    userAnalyticsEntries;
+    activitySummaries;
   };
 
   public query ({ caller }) func whoami() : async Principal {

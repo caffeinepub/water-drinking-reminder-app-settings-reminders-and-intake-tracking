@@ -13,18 +13,28 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const UserAnalyticsEntry = IDL.Record({
+export const RewardType = IDL.Variant({
+  'sleepyhead' : IDL.Null,
+  'plastic_pirate' : IDL.Null,
+  'runner' : IDL.Null,
+  'hydrator' : IDL.Null,
+});
+export const UserRewards = IDL.Record({
+  'lastGoalCompleteDay' : IDL.Int,
+  'streak' : IDL.Nat,
+  'badges' : IDL.Vec(RewardType),
+  'lastUpdated' : IDL.Int,
+  'completedGoals' : IDL.Nat,
+});
+export const UserActivitySummary = IDL.Record({
   'runningLogs' : IDL.Nat,
   'principal' : IDL.Principal,
-  'issuedDay' : IDL.Int,
   'hydrationLogs' : IDL.Nat,
   'sleepLogs' : IDL.Nat,
   'profileName' : IDL.Text,
 });
 export const AnalyticsMetrics = IDL.Record({
-  'weeklyActiveUsers' : IDL.Nat,
   'totalUniqueUsers' : IDL.Nat,
-  'dailyActiveUsers' : IDL.Nat,
   'totalSleepEvents' : IDL.Nat,
   'totalHydrationEvents' : IDL.Nat,
   'totalRunningEvents' : IDL.Nat,
@@ -42,19 +52,6 @@ export const RunningLog = IDL.Record({
   'timestamp' : IDL.Int,
 });
 export const SleepLog = IDL.Record({ 'hours' : IDL.Float64, 'date' : IDL.Int });
-export const RewardType = IDL.Variant({
-  'sleepyhead' : IDL.Null,
-  'plastic_pirate' : IDL.Null,
-  'runner' : IDL.Null,
-  'hydrator' : IDL.Null,
-});
-export const UserRewards = IDL.Record({
-  'lastGoalCompleteDay' : IDL.Int,
-  'streak' : IDL.Nat,
-  'badges' : IDL.Vec(RewardType),
-  'lastUpdated' : IDL.Int,
-  'completedGoals' : IDL.Nat,
-});
 export const UserData = IDL.Record({
   'dailyGoal' : IDL.Float64,
   'cupSize' : IDL.Float64,
@@ -77,7 +74,8 @@ export const idlService = IDL.Service({
   'addDailyIntake' : IDL.Func([IDL.Float64], [], []),
   'addSleepLog' : IDL.Func([IDL.Float64], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'getAllUserAnalytics' : IDL.Func([], [IDL.Vec(UserAnalyticsEntry)], []),
+  'completeDailyGoal' : IDL.Func([], [UserRewards], []),
+  'getAllUserAnalytics' : IDL.Func([], [IDL.Vec(UserActivitySummary)], []),
   'getAnalyticsMetrics' : IDL.Func([], [AnalyticsMetrics], []),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
@@ -120,18 +118,28 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const UserAnalyticsEntry = IDL.Record({
+  const RewardType = IDL.Variant({
+    'sleepyhead' : IDL.Null,
+    'plastic_pirate' : IDL.Null,
+    'runner' : IDL.Null,
+    'hydrator' : IDL.Null,
+  });
+  const UserRewards = IDL.Record({
+    'lastGoalCompleteDay' : IDL.Int,
+    'streak' : IDL.Nat,
+    'badges' : IDL.Vec(RewardType),
+    'lastUpdated' : IDL.Int,
+    'completedGoals' : IDL.Nat,
+  });
+  const UserActivitySummary = IDL.Record({
     'runningLogs' : IDL.Nat,
     'principal' : IDL.Principal,
-    'issuedDay' : IDL.Int,
     'hydrationLogs' : IDL.Nat,
     'sleepLogs' : IDL.Nat,
     'profileName' : IDL.Text,
   });
   const AnalyticsMetrics = IDL.Record({
-    'weeklyActiveUsers' : IDL.Nat,
     'totalUniqueUsers' : IDL.Nat,
-    'dailyActiveUsers' : IDL.Nat,
     'totalSleepEvents' : IDL.Nat,
     'totalHydrationEvents' : IDL.Nat,
     'totalRunningEvents' : IDL.Nat,
@@ -149,19 +157,6 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : IDL.Int,
   });
   const SleepLog = IDL.Record({ 'hours' : IDL.Float64, 'date' : IDL.Int });
-  const RewardType = IDL.Variant({
-    'sleepyhead' : IDL.Null,
-    'plastic_pirate' : IDL.Null,
-    'runner' : IDL.Null,
-    'hydrator' : IDL.Null,
-  });
-  const UserRewards = IDL.Record({
-    'lastGoalCompleteDay' : IDL.Int,
-    'streak' : IDL.Nat,
-    'badges' : IDL.Vec(RewardType),
-    'lastUpdated' : IDL.Int,
-    'completedGoals' : IDL.Nat,
-  });
   const UserData = IDL.Record({
     'dailyGoal' : IDL.Float64,
     'cupSize' : IDL.Float64,
@@ -184,7 +179,8 @@ export const idlFactory = ({ IDL }) => {
     'addDailyIntake' : IDL.Func([IDL.Float64], [], []),
     'addSleepLog' : IDL.Func([IDL.Float64], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'getAllUserAnalytics' : IDL.Func([], [IDL.Vec(UserAnalyticsEntry)], []),
+    'completeDailyGoal' : IDL.Func([], [UserRewards], []),
+    'getAllUserAnalytics' : IDL.Func([], [IDL.Vec(UserActivitySummary)], []),
     'getAnalyticsMetrics' : IDL.Func([], [AnalyticsMetrics], []),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),

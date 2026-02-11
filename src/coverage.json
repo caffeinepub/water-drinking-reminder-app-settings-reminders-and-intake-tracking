@@ -1,54 +1,41 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T18:16:04.740Z",
+  "generatedAt": "2026-02-11T10:29:10.623Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
+    "total": 3,
     "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix authorization/registration so that a newly signed-in user can create a profile and then successfully call core tracking methods (updateUserSettings, addDailyIntake, etc.) without hitting silent authorization failures.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Remove any per-user \"last active\" display from the frontend UI, including the admin user analytics table column currently labeled \"Last Active\" and any formatting helpers used solely for that display.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/admin/AdminUserAnalyticsTable.tsx",
+          "frontend/src/utils/analyticsFormat.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/admin/AdminUserAnalyticsTable.tsx",
+          "frontend/src/utils/analyticsFormat.ts"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "Ensure daily goal completion is persisted exactly once per day per user and reliably increments completedGoals and streak in UserRewards when the hydration goal is first met for that day.",
+        "summary": "Stop exposing per-user last active timestamps from the backend admin/user-analytics data model and APIs (e.g., remove/stop populating fields like `UserAnalytics.lastActiveDay` and `UserAnalyticsEntry.issuedDay` used to represent last activity). Keep aggregate analytics working without returning per-user last-active data.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Fix reward/badge unlocking so that newly earned rewards are added to UserRewards.badges and persist across refreshes, based on the latest streak/goal progression.",
+        "summary": "If existing stable/persistent state contains per-user last-active fields, add a conditional migration that safely upgrades stored analytics data to the new schema (dropping last-active data or mapping it to a schema without last-active fields) without data loss for other analytics counters.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Update the frontend intake/goal completion flow so that after adding intake (online), the UI reliably reflects the latest streak, completed goals, and unlocked badges without requiring a manual refresh, and surfaces backend errors to the user.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/utils/backendError.ts",
-          "frontend/src/components/intake/QuickAddIntake.tsx",
-          "frontend/src/components/settings/SettingsForm.tsx",
-          "frontend/src/offline/OfflineSyncProvider.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/utils/backendError.ts",
-          "frontend/src/components/intake/QuickAddIntake.tsx",
-          "frontend/src/components/settings/SettingsForm.tsx",
-          "frontend/src/offline/OfflineSyncProvider.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ]
       }
     ]
   },
@@ -59,11 +46,14 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/intake/QuickAddIntake.tsx",
-    "frontend/src/components/settings/SettingsForm.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/admin/AdminAnalyticsSummary.tsx",
+    "frontend/src/components/admin/AdminUserAnalyticsTable.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/offline/OfflineSyncProvider.tsx",
-    "frontend/src/utils/backendError.ts",
+    "frontend/src/utils/analyticsFormat.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

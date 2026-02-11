@@ -2,14 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-frontend-intake-goal-completion-flow-so-that-after-adding-intake-online-the-ui-reliably-reflects-the-latest-streak-completed-goals-and-unlocked-badges-without-requiring-a-manual-refresh-and-surfaces-backend-errors-to-the-user",
-      "featureTitle": "Update the frontend intake/goal completion flow so that after adding intake (online), the UI reliably reflects the latest streak, completed goals, and unlocked badges without requiring a manual refresh, and surfaces backend errors to the user.",
+      "featureId": "feature-remove-any-per-user-last-active-display-from-the-frontend-ui-including-the-admin-user-analytics-table-column-currently-labeled-last-active-and-any-formatting-helpers-used-solely-for-that-display",
+      "featureTitle": "Remove any per-user \"last active\" display from the frontend UI, including the admin user analytics table column currently labeled \"Last Active\" and any formatting helpers used solely for that display.",
       "files": [
-        "frontend/src/components/intake/QuickAddIntake.tsx",
-        "frontend/src/components/settings/SettingsForm.tsx",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/offline/OfflineSyncProvider.tsx",
-        "frontend/src/utils/backendError.ts"
+        "frontend/src/components/admin/AdminUserAnalyticsTable.tsx",
+        "frontend/src/utils/analyticsFormat.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -20,7 +17,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "confidence": "high"
     }

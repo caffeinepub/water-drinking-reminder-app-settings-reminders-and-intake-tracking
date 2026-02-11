@@ -1,20 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Goal/streak tracking app with rewards that unlock on goal completion.",
+  "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [
-    "Streaks are not being added/recorded.",
-    "Goals are not being added/created.",
-    "Rewards are not unlocking (likely tied to goal completion logic)."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-update-the-frontend-intake-goal-completion-flow-so-that-after-adding-intake-online-the-ui-reliably-reflects-the-latest-streak-completed-goals-and-unlocked-badges-without-requiring-a-manual-refresh-and-surfaces-backend-errors-to-the-user",
-      "title": "Update the frontend intake/goal completion flow so that after adding intake (online), the UI reliably reflects the latest streak, completed goals, and unlocked badges without requiring a manual refresh, and surfaces backend errors to the user.",
+      "id": "feature-remove-any-per-user-last-active-display-from-the-frontend-ui-including-the-admin-user-analytics-table-column-currently-labeled-last-active-and-any-formatting-helpers-used-solely-for-that-display",
+      "title": "Remove any per-user \"last active\" display from the frontend UI, including the admin user analytics table column currently labeled \"Last Active\" and any formatting helpers used solely for that display.",
       "reqIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "version": 1
     }
@@ -22,30 +18,28 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Fix authorization/registration so that a newly signed-in user can create a profile and then successfully call core tracking methods (updateUserSettings, addDailyIntake, etc.) without hitting silent authorization failures.",
-      "reqIds": [
-        "REQ-1"
-      ],
+      "summary": "Remove/hide users' \"last active\" status from the product/UI",
+      "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-2",
-      "summary": "Ensure daily goal completion is persisted exactly once per day per user and reliably increments completedGoals and streak in UserRewards when the hydration goal is first met for that day.",
+      "id": "AR-3",
+      "summary": "Stop exposing per-user last active timestamps from the backend admin/user-analytics data model and APIs (e.g., remove/stop populating fields like `UserAnalytics.lastActiveDay` and `UserAnalyticsEntry.issuedDay` used to represent last activity). Keep aggregate analytics working without returning per-user last-active data.",
       "reqIds": [
         "REQ-2"
       ],
       "status": "pending"
     },
     {
-      "id": "AR-3",
-      "summary": "Fix reward/badge unlocking so that newly earned rewards are added to UserRewards.badges and persist across refreshes, based on the latest streak/goal progression.",
+      "id": "AR-4",
+      "summary": "If existing stable/persistent state contains per-user last-active fields, add a conditional migration that safely upgrades stored analytics data to the new schema (dropping last-active data or mapping it to a schema without last-active fields) without data loss for other analytics counters.",
       "reqIds": [
         "REQ-3"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Fix streak, goal completion, and reward unlocking not updating",
+  "projectName": "Remove per-user last active status from analytics and UI",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

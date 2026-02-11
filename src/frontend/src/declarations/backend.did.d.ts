@@ -11,9 +11,7 @@ import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
 export interface AnalyticsMetrics {
-  'weeklyActiveUsers' : bigint,
   'totalUniqueUsers' : bigint,
-  'dailyActiveUsers' : bigint,
   'totalSleepEvents' : bigint,
   'totalHydrationEvents' : bigint,
   'totalRunningEvents' : bigint,
@@ -38,10 +36,9 @@ export interface RunningLog {
   'timestamp' : bigint,
 }
 export interface SleepLog { 'hours' : number, 'date' : bigint }
-export interface UserAnalyticsEntry {
+export interface UserActivitySummary {
   'runningLogs' : bigint,
   'principal' : Principal,
-  'issuedDay' : bigint,
   'hydrationLogs' : bigint,
   'sleepLogs' : bigint,
   'profileName' : string,
@@ -73,7 +70,8 @@ export interface _SERVICE {
    */
   'addSleepLog' : ActorMethod<[number], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'getAllUserAnalytics' : ActorMethod<[], Array<UserAnalyticsEntry>>,
+  'completeDailyGoal' : ActorMethod<[], UserRewards>,
+  'getAllUserAnalytics' : ActorMethod<[], Array<UserActivitySummary>>,
   'getAnalyticsMetrics' : ActorMethod<[], AnalyticsMetrics>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,

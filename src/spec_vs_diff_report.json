@@ -1,29 +1,21 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T18:16:04.737Z",
-  "summary": "Frontend adds clearer error normalization, toast surfacing, and refetching after intake/settings updates (including offline-queue behavior). Backend diff excerpt shows type additions and a new migration module, but does not provide evidence of the requested authorization fix, once-per-day goal completion/streak logic, or badge unlocking persistence logic changes.",
+  "generatedAt": "2026-02-11T10:29:10.620Z",
+  "summary": "The diff introduces a backend data migration and updates backend analytics types to remove per-user last-active fields, plus frontend admin analytics UI changes. However, due to truncation, it’s not fully verifiable that the UI column/text removal and all backend API/logging paths no longer expose or write per-user last-active data.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Fix authorization/registration so that a newly signed-in user can create a profile and then successfully call core tracking methods (updateUserSettings, addDailyIntake, etc.) without hitting silent authorization failures; and unauthorized callers get clear errors.",
-      "reason": "The backend diff excerpt does not show any changes to registration/authorization checks or error handling for core tracking methods. backend/main.mo is truncated before any method bodies/authorization gates, so there is no evidence the authorization/registration logic was updated per the acceptance criteria.",
+      "requirement": "Remove any per-user \"last active\" display from the frontend UI (admin table column labeled \"Last Active\" and any related formatting helpers), and ensure no user-facing text includes \"Last Active\" for an individual user.",
+      "reason": "The relevant admin table file is truncated before showing all columns/headers, so the diff summary does not provide explicit evidence that the \"Last Active\" column/text was removed everywhere. Also no explicit evidence is shown about removing any dedicated last-active formatting helper if it existed previously.",
       "evidence": [
-        "backend/main.mo (truncated)"
+        "frontend/src/components/admin/AdminUserAnalyticsTable.tsx (truncated)"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "Ensure daily goal completion is persisted exactly once per day per user and reliably increments completedGoals and streak when the hydration goal is first met for that day, with correct same-day/no-duplicate behavior and streak reset rules.",
-      "reason": "No shown backend implementation for addDailyIntake goal-detection, lastGoalCompleteDay updates, completedGoals incrementing exactly once per day, or streak increment/reset rules. backend/main.mo is truncated and contains only type/map declarations in the excerpt.",
-      "evidence": [
-        "backend/main.mo (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Fix reward/badge unlocking so newly earned rewards are added to UserRewards.badges and persist across refreshes, without duplicates, based on latest streak/goal progression.",
-      "reason": "The diff provides no evidence of backend logic that appends badges when thresholds are reached, prevents duplicates, or persists unlocked badges across refreshes. The excerpted backend changes do not include reward-unlock logic.",
+      "requirement": "Stop exposing per-user last active timestamps from backend admin/user-analytics APIs and stop updating per-user last-active fields from activity logging (hydration/sleep/running). Keep aggregate analytics working without storing/exposing per-user last-active timestamps.",
+      "reason": "While backend types shown remove `lastActiveDay` from `UserAnalytics`, the diff is truncated and does not show the admin/user-analytics API response construction or the hydration/sleep/running logging code paths, so it’s not verifiable from the provided excerpt that responses no longer include last-active fields and that no code still writes/updates last-active state.",
       "evidence": [
         "backend/main.mo (truncated)"
       ]
@@ -31,31 +23,22 @@
   ],
   "hallucinated_features": [
     {
-      "description": "Introduced a backend migration module that adjusts streaks by incrementing them during upgrade (adjustStreakForUpgrade adds 1).",
-      "reason": "The BuildRequest did not ask for any data migration or automatic streak adjustment on upgrade; it specifically asked to fix streak/goal/reward updating logic going forward.",
+      "description": "Added a cache timestamp formatting utility (`formatCacheTimestamp`) in analytics formatting utils.",
+      "reason": "The BuildRequest only asks to remove per-user last-active visibility/storage; adding new formatting functionality for cache timestamps is not requested and could be considered scope expansion.",
       "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo (imports Migration; '(with migration = Migration.run)')"
-      ]
-    },
-    {
-      "description": "Added extensive UI/theme and reminder-related changes (Gen-Z theme tokens/animations, reminder scheduler/context, reminder UI changes) and admin-tab related behavior beyond intake/goal completion flow.",
-      "reason": "REQ-4 is limited to intake/goal completion UI updating and error surfacing (plus offline queue indication). The diff summary indicates multiple unrelated UI/feature expansions not requested.",
-      "evidence": [
-        "frontend-file-summaries.txt (index.css, tailwind.config.js, useReminderScheduler*, reminders components, App.tsx admin tab summary)"
+        "frontend/src/utils/analyticsFormat.ts"
       ]
     }
   ],
-  "confidence": 0.74,
+  "confidence": 0.55,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/intake/QuickAddIntake.tsx",
-    "frontend/src/components/settings/SettingsForm.tsx",
+    "frontend/src/components/admin/AdminAnalyticsSummary.tsx",
+    "frontend/src/components/admin/AdminUserAnalyticsTable.tsx",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/offline/OfflineSyncProvider.tsx",
-    "frontend/src/utils/backendError.ts",
+    "frontend/src/utils/analyticsFormat.ts",
     "project_state.json"
   ]
 }

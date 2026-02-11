@@ -1,41 +1,26 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Make intake flow refresh rewards/streak immediately and surface backend errors",
+  "title": "Remove per-user last active status from admin analytics UI",
   "requirements": [
     {
-      "id": "REQ-4",
-      "summary": "Ensure add-intake and settings updates refresh rewards/streak/badges immediately when online, show clear backend errors, and avoid showing unlocked rewards while offline-queued until sync completes.",
+      "id": "REQ-1",
+      "summary": "Remove all per-user “Last Active” UI and any frontend-only formatting helpers used exclusively for it.",
       "acceptanceCriteria": [
-        "After a successful addDailyIntake call, the UI updates the streak and completed-goals counts and shows newly unlocked badges (if any) without a manual refresh.",
-        "If addDailyIntake or updateUserSettings fails due to authorization or other backend errors, the user sees an English error message (e.g., via toast/banner) indicating the action did not save.",
-        "If the action is queued due to offline mode, the UI clearly indicates it was queued and does not incorrectly show newly unlocked rewards until the sync completes."
+        "Admin user analytics table no longer shows a \"Last Active\" column or any per-user last-active date/relative time.",
+        "No user-facing text anywhere in the app includes \"Last Active\" for an individual user.",
+        "Frontend builds successfully after removing/adjusting any imports/usages tied to per-user last active formatting (e.g., formatLastActiveDay if it becomes unused)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/backendError.ts",
-          "operation": "create",
-          "description": "Add a small utility to normalize backend/agent errors (including authorization traps) into clear English messages suitable for user-facing toasts/banners. Use guidance from the selected \"authorization\" component to handle authorization failures gracefully; verify the component's usage instructions before implementing."
+          "path": "frontend/src/components/admin/AdminUserAnalyticsTable.tsx",
+          "operation": "modify",
+          "description": "Remove the per-user \"Last Active\" table column (header label and cell rendering) and eliminate sorting by the last-active field (e.g., remove 'issuedDay' from SortField and default sort). Also remove any imports/usages for last-active formatting helpers so the table displays only non-last-active per-user analytics."
         },
         {
-          "path": "frontend/src/components/intake/QuickAddIntake.tsx",
+          "path": "frontend/src/utils/analyticsFormat.ts",
           "operation": "modify",
-          "description": "Adjust the online add-intake flow to reliably refresh all dependent UI state (todaysIntake, intakeHistory, userRewards) after a successful addDailyIntake, and only compute/show newly unlocked badges/streak changes based on post-refetch data. Keep the existing offline-queue early return so queued actions never trigger reward/streak/badge celebrations before sync completes. Replace generic failure toasts with clear English messages derived via the new backendError utility (including authorization/registration failures)."
-        },
-        {
-          "path": "frontend/src/components/settings/SettingsForm.tsx",
-          "operation": "modify",
-          "description": "Replace generic updateUserSettings error handling with clear English messages via the backendError utility (including authorization failures) and ensure the toast explicitly states that changes did not save when the call fails. Preserve current behavior where offline-queued updates are clearly indicated as queued."
-        },
-        {
-          "path": "frontend/src/offline/OfflineSyncProvider.tsx",
-          "operation": "modify",
-          "description": "When replaying queued actions, ensure caches relevant to rewards/streak/badges are invalidated/refetched after syncing addDailyIntake so rewards/streak/badges update promptly once sync completes; on sync failures, surface a clear English error message (and avoid implying rewards were granted)."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Tighten the addDailyIntake/updateUserSettings mutation success behavior to consistently invalidate the exact query keys used by TodayProgress/RewardsPanel/HistoryView when online, and to keep queued (offline) results from triggering invalidations. This supports immediate UI refresh after online mutations and prevents premature reward UI changes while offline-queued."
+          "description": "Remove the per-user last-active formatting helper (e.g., formatLastActiveDay) if it becomes unused after updating the admin analytics table; ensure remaining exports (e.g., formatBigIntCount, formatCacheTimestamp) remain intact and that the frontend compiles without unused imports."
         }
       ]
     }

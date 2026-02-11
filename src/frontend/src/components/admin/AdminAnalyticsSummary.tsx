@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Activity, TrendingUp, Droplets, Moon, Footprints } from 'lucide-react';
+import { Users, TrendingUp, Droplets, Moon, Footprints } from 'lucide-react';
 import type { AnalyticsMetrics } from '../../backend';
 import { formatBigIntCount } from '../../utils/analyticsFormat';
 
@@ -13,18 +13,6 @@ export default function AdminAnalyticsSummary({ metrics }: AdminAnalyticsSummary
       title: 'Total Users',
       value: formatBigIntCount(metrics.totalUniqueUsers),
       icon: Users,
-      gradient: 'from-primary to-accent',
-    },
-    {
-      title: 'Daily Active Users',
-      value: formatBigIntCount(metrics.dailyActiveUsers),
-      icon: Activity,
-      gradient: 'from-accent to-primary',
-    },
-    {
-      title: 'Weekly Active Users',
-      value: formatBigIntCount(metrics.weeklyActiveUsers),
-      icon: TrendingUp,
       gradient: 'from-primary to-accent',
     },
   ];
@@ -54,10 +42,10 @@ export default function AdminAnalyticsSummary({ metrics }: AdminAnalyticsSummary
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-primary" />
-          User Activity Summary
+          <Users className="w-5 h-5 text-primary" />
+          User Summary
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {summaryCards.map((card) => (
             <Card key={card.title} className="border-2 shadow-sm hover:shadow-glow transition-shadow">
               <CardHeader className="pb-3">

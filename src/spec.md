@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix hydration streak, daily goal completion, and reward/badge unlocking so they update reliably for newly signed-in users and reflect in the UI without manual refresh.
+**Goal:** Remove any per-user “last active” status from the app’s analytics UI and backend data/APIs while keeping aggregate analytics working.
 
 **Planned changes:**
-- Fix backend authorization/registration flow so first-time users can create a profile and successfully call core tracking methods (e.g., updateUserSettings, addDailyIntake), returning clear errors when unauthorized instead of failing silently.
-- Update backend goal-completion logic to persist goal completion exactly once per user per day, correctly incrementing completedGoals and updating streak behavior across consecutive days.
-- Fix backend reward/badge unlocking to append newly earned badges without duplication and persist them in UserRewards across refreshes.
-- Update frontend intake/goal completion flow to refresh streak, completed goals, and unlocked badges after successful online intake updates; surface backend errors to the user; and clearly indicate offline-queued actions without prematurely showing new rewards.
+- Remove the “Last Active” column and any per-user last-active text from the admin user analytics UI.
+- Delete/adjust any frontend helpers/imports used only to format/display per-user last active values.
+- Update backend admin/user-analytics types and endpoints to stop storing, populating, and returning per-user last-active fields (e.g., fields representing last-active day/timestamp).
+- Add a safe, conditional backend state migration to drop per-user last-active data from persisted analytics state while preserving other analytics counters.
 
-**User-visible outcome:** A first-time signed-in user can set up their profile and track intake successfully; when the daily goal is met, streaks/goals increment correctly and badges unlock and persist, with the UI updating immediately (or showing queued status offline) and displaying clear error messages on failures.
+**User-visible outcome:** Admin analytics screens no longer show “Last Active” for individual users, and the system no longer stores or exposes per-user last-active timestamps/days, while aggregate analytics remain available.

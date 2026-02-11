@@ -5,7 +5,7 @@ import { useOnlineStatus } from './useOnlineStatus';
 import { useOfflinePreference } from '../offline/useOfflinePreference';
 import { OfflineQueue } from '../offline/offlineQueue';
 import { writeOfflineData, readOfflineData } from '../offline/offlineStorage';
-import type { UserProfile, UserData, HydrationLog, SleepLog, RunningLog, CustomReminderDefinition, UserRewards, AnalyticsMetrics, UserAnalyticsEntry } from '../backend';
+import type { UserProfile, UserData, HydrationLog, SleepLog, RunningLog, CustomReminderDefinition, UserRewards, AnalyticsMetrics, UserActivitySummary } from '../backend';
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -160,7 +160,8 @@ export function useAddDailyIntake() {
         return { queued: true };
       }
       
-      return actor.addDailyIntake(amount);
+      await actor.addDailyIntake(amount);
+      return { queued: false };
     },
     onSuccess: async (result: any) => {
       if (result?.queued) {
@@ -168,12 +169,9 @@ export function useAddDailyIntake() {
         return;
       }
       
-      // Invalidate and refetch all related queries to ensure fresh data
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['todaysIntake'] }),
-        queryClient.invalidateQueries({ queryKey: ['intakeHistory'] }),
-        queryClient.invalidateQueries({ queryKey: ['userRewards'] }),
-      ]);
+      // Invalidate and wait for refetch to complete for all related queries
+      await queryClient.refetchQueries({ queryKey: ['todaysIntake'] });
+      await queryClient.refetchQueries({ queryKey: ['intakeHistory'] });
     },
   });
 }
@@ -223,6 +221,25 @@ export function useGetUserRewards() {
       return actor.getUserRewards();
     },
     enabled: !!actor && !actorFetching,
+    retry: 1, // Allow one retry
+  });
+}
+
+export function useCompleteDailyGoal() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.completeDailyGoal();
+    },
+    onSuccess: async (updatedRewards) => {
+      // Update the cache with the new rewards data
+      queryClient.setQueryData(['userRewards'], updatedRewards);
+      // Also refetch to ensure consistency
+      await queryClient.refetchQueries({ queryKey: ['userRewards'] });
+    },
   });
 }
 
@@ -487,7 +504,7 @@ export function useRemoveCustomReminder() {
   });
 }
 
-// Analytics hooks (admin only)
+// Admin analytics hooks
 export function useGetAnalyticsMetrics() {
   const { actor, isFetching: actorFetching } = useActor();
   const { data: isAdmin } = useIsCallerAdmin();
@@ -499,6 +516,7 @@ export function useGetAnalyticsMetrics() {
       return actor.getAnalyticsMetrics();
     },
     enabled: !!actor && !actorFetching && isAdmin === true,
+    retry: false,
   });
 }
 
@@ -506,31 +524,31 @@ export function useGetAllUserAnalytics() {
   const { actor, isFetching: actorFetching } = useActor();
   const { data: isAdmin } = useIsCallerAdmin();
 
-  return useQuery<UserAnalyticsEntry[]>({
+  return useQuery<UserActivitySummary[]>({
     queryKey: ['allUserAnalytics'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
       return actor.getAllUserAnalytics();
     },
     enabled: !!actor && !actorFetching && isAdmin === true,
+    retry: false,
   });
 }
 
-// Utility hook to check if data is from offline cache
-export function useIsOfflineData(queryKey: string) {
+// Helper hook to check if data is from offline cache
+export function useIsOfflineData(queryKey: string | string[]) {
   const { identity } = useInternetIdentity();
   const isOnline = useOnlineStatus();
   const { enabled: offlineEnabled } = useOfflinePreference();
-  const queryClient = useQueryClient();
 
   if (!isOnline && offlineEnabled && identity) {
-    const queryState = queryClient.getQueryState([queryKey]);
-    if (queryState?.dataUpdatedAt) {
-      return {
-        isOfflineData: true,
-        cachedAt: queryState.dataUpdatedAt,
-      };
-    }
+    const principal = identity.getPrincipal().toString();
+    const key = Array.isArray(queryKey) ? queryKey[0] : queryKey;
+    const cached = readOfflineData(principal, key);
+    return {
+      isOfflineData: !!cached,
+      cachedAt: cached?.timestamp,
+    };
   }
 
   return {

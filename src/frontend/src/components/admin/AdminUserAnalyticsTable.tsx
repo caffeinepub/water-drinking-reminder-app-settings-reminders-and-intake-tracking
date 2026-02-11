@@ -4,22 +4,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, ArrowUpDown, User, Eye } from 'lucide-react';
-import type { UserAnalyticsEntry } from '../../backend';
+import type { UserActivitySummary } from '../../backend';
 import type { Principal } from '@dfinity/principal';
-import { formatBigIntCount, formatLastActiveDay } from '../../utils/analyticsFormat';
+import { formatBigIntCount } from '../../utils/analyticsFormat';
 
 interface AdminUserAnalyticsTableProps {
-  userAnalytics: UserAnalyticsEntry[];
+  userAnalytics: UserActivitySummary[];
   onSelectUser?: (principal: Principal) => void;
 }
 
-type SortField = 'profileName' | 'issuedDay' | 'hydrationLogs' | 'runningLogs' | 'sleepLogs';
+type SortField = 'profileName' | 'hydrationLogs' | 'runningLogs' | 'sleepLogs';
 type SortDirection = 'asc' | 'desc';
 
 export default function AdminUserAnalyticsTable({ userAnalytics, onSelectUser }: AdminUserAnalyticsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('issuedDay');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortField, setSortField] = useState<SortField>('profileName');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -108,17 +108,6 @@ export default function AdminUserAnalyticsTable({ userAnalytics, onSelectUser }:
                     </Button>
                   </TableHead>
                   <TableHead className="hidden md:table-cell">Principal</TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleSort('issuedDay')}
-                      className="font-semibold hover:bg-muted"
-                    >
-                      Last Active
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
                   <TableHead className="text-center">
                     <Button
                       variant="ghost"
@@ -158,7 +147,7 @@ export default function AdminUserAnalyticsTable({ userAnalytics, onSelectUser }:
               <TableBody>
                 {filteredAndSortedData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={onSelectUser ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={onSelectUser ? 6 : 5} className="text-center py-8 text-muted-foreground">
                       {searchTerm ? 'No users found matching your search.' : 'No user data available yet.'}
                     </TableCell>
                   </TableRow>
@@ -175,9 +164,6 @@ export default function AdminUserAnalyticsTable({ userAnalytics, onSelectUser }:
                       </TableCell>
                       <TableCell className="hidden md:table-cell font-mono text-xs text-muted-foreground">
                         {user.principal.toString().slice(0, 12)}...
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatLastActiveDay(user.issuedDay)}
                       </TableCell>
                       <TableCell className="text-center">
                         <span className="inline-flex items-center justify-center px-2 py-1 rounded-full bg-primary/10 text-primary font-medium text-sm">

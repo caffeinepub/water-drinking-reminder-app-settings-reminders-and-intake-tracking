@@ -1,91 +1,87 @@
 {
   "kind": "build_request",
-  "title": "Fix streak, goal completion, and reward unlocking not updating",
-  "priority": "high",
+  "title": "Remove per-user last active status from analytics and UI",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix authorization/registration so that a newly signed-in user can create a profile and then successfully call core tracking methods (updateUserSettings, addDailyIntake, etc.) without hitting silent authorization failures.",
-      "target": "backend",
+      "text": "Remove any per-user \"last active\" display from the frontend UI, including the admin user analytics table column currently labeled \"Last Active\" and any formatting helpers used solely for that display.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "Streaks are not getting added and goals are also not getting added and rewarding are not getting unlocked"
+          "I dont want users last active status"
         ]
       },
       "acceptanceCriteria": [
-        "A first-time user can complete the in-app profile setup and then call updateUserSettings and addDailyIntake successfully (no traps for missing #user permission).",
-        "If the caller is not authorized, the frontend receives a clear error that can be surfaced (not a silent failure)."
+        "Admin user analytics table no longer shows a \"Last Active\" column or any per-user last-active date/relative time.",
+        "No user-facing text anywhere in the app includes \"Last Active\" for an individual user.",
+        "Frontend builds successfully after removing/adjusting any imports/usages tied to per-user last active formatting (e.g., formatLastActiveDay if it becomes unused)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Ensure daily goal completion is persisted exactly once per day per user and reliably increments completedGoals and streak in UserRewards when the hydration goal is first met for that day.",
+      "text": "Stop exposing per-user last active timestamps from the backend admin/user-analytics data model and APIs (e.g., remove/stop populating fields like `UserAnalytics.lastActiveDay` and `UserAnalyticsEntry.issuedDay` used to represent last activity). Keep aggregate analytics working without returning per-user last-active data.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "Streaks are not getting added and goals are also not getting added and rewarding are not getting unlocked"
+          "I dont want users last active status"
         ]
       },
       "acceptanceCriteria": [
-        "When a user’s total intake for the current day first reaches/exceeds dailyGoal, completedGoals increments by 1 and lastGoalCompleteDay is set to today.",
-        "Further addDailyIntake calls on the same day do not increment completedGoals again.",
-        "Streak increments by 1 when a goal is completed on consecutive days, resets to 1 when there is a gap, and stays unchanged when completing again on the same day."
+        "Backend no longer returns a per-user last-active timestamp/day in any admin/user analytics response.",
+        "Calls that previously updated per-user last-active fields no longer do so (hydration/sleep/running logging should not write per-user last-active state).",
+        "Aggregate analytics endpoints (e.g., total users, total event counts, DAU/WAU if present) continue to work, but are computed without storing/exposing per-user last-active timestamps.",
+        "Motoko canister compiles and frontend generated types remain consistent with updated backend types."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Fix reward/badge unlocking so that newly earned rewards are added to UserRewards.badges and persist across refreshes, based on the latest streak/goal progression.",
+      "text": "If existing stable/persistent state contains per-user last-active fields, add a conditional migration that safely upgrades stored analytics data to the new schema (dropping last-active data or mapping it to a schema without last-active fields) without data loss for other analytics counters.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "rewarding are not getting unlocked"
+          "I dont want users last active status"
         ]
       },
       "acceptanceCriteria": [
-        "When a streak threshold that corresponds to a badge is reached, that badge is appended to UserRewards.badges if not already present.",
-        "Unlocked badges remain in UserRewards.badges after page reload and future reward updates.",
-        "If the user already has a badge, reaching the same threshold again does not duplicate it."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Update the frontend intake/goal completion flow so that after adding intake (online), the UI reliably reflects the latest streak, completed goals, and unlocked badges without requiring a manual refresh, and surfaces backend errors to the user.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Streaks are not getting added and goals are also not getting added and rewarding are not getting unlocked"
-        ]
-      },
-      "acceptanceCriteria": [
-        "After a successful addDailyIntake call, the UI updates the streak and completed-goals counts and shows newly unlocked badges (if any) without a manual refresh.",
-        "If addDailyIntake or updateUserSettings fails due to authorization or other backend errors, the user sees an English error message (e.g., via toast/banner) indicating the action did not save.",
-        "If the action is queued due to offline mode, the UI clearly indicates it was queued and does not incorrectly show newly unlocked rewards until the sync completes."
+        "Upgrade from the current deployed state completes without traps.",
+        "Existing users retain their non-last-active analytics counters (e.g., totals) after upgrade.",
+        "No per-user last-active values remain accessible after upgrade."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional canisters/services).",
-    "Do not modify files in frontend immutablePaths (frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui)."
+    "Backend must remain a single-actor Motoko canister (all logic in backend/main.mo).",
+    "Do not edit files under frontend/src/components/ui or any frontend immutablePaths listed in SYSTEM_CONTEXT; compose existing UI components instead."
   ],
   "nonGoals": [
-    "Add new reward types beyond the existing RewardType variants.",
-    "Implement third-party authentication providers (only Internet Identity is supported).",
-    "Add real-time features (WebSockets/push)."
+    "Changing authentication (Internet Identity) behavior.",
+    "Adding new analytics features beyond removing per-user last active visibility/storage.",
+    "Implementing real-time presence/online indicators."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Do not show or expose per-user \"last active\" status."
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

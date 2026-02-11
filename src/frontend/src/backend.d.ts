@@ -7,6 +7,10 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
+export interface HydrationLog {
+    date: bigint;
+    totalIntake: number;
+}
 export interface SleepLog {
     hours: number;
     date: bigint;
@@ -26,9 +30,7 @@ export interface CustomReminderDefinition {
     lastSent: bigint;
 }
 export interface AnalyticsMetrics {
-    weeklyActiveUsers: bigint;
     totalUniqueUsers: bigint;
-    dailyActiveUsers: bigint;
     totalSleepEvents: bigint;
     totalHydrationEvents: bigint;
     totalRunningEvents: bigint;
@@ -40,17 +42,12 @@ export interface UserRewards {
     lastUpdated: bigint;
     completedGoals: bigint;
 }
-export interface UserAnalyticsEntry {
+export interface UserActivitySummary {
     runningLogs: bigint;
     principal: Principal;
-    issuedDay: bigint;
     hydrationLogs: bigint;
     sleepLogs: bigint;
     profileName: string;
-}
-export interface HydrationLog {
-    date: bigint;
-    totalIntake: number;
 }
 export interface UserData {
     dailyGoal: number;
@@ -81,7 +78,8 @@ export interface backendInterface {
      */
     addSleepLog(hours: number): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    getAllUserAnalytics(): Promise<Array<UserAnalyticsEntry>>;
+    completeDailyGoal(): Promise<UserRewards>;
+    getAllUserAnalytics(): Promise<Array<UserActivitySummary>>;
     getAnalyticsMetrics(): Promise<AnalyticsMetrics>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;

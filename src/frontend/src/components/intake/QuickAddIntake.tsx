@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAddDailyIntake, useGetUserSettings, useGetUserRewards, useGetTodaysIntake } from '../../hooks/useQueries';
+import { useAddDailyIntake, useGetUserSettings, useGetUserRewards, useGetTodaysIntake, useCompleteDailyGoal } from '../../hooks/useQueries';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import type { UserRewards } from '../../backend';
 export default function QuickAddIntake() {
   const [customAmount, setCustomAmount] = useState('');
   const addIntakeMutation = useAddDailyIntake();
+  const completeDailyGoalMutation = useCompleteDailyGoal();
   const { data: settings } = useGetUserSettings();
   const { data: todaysIntake } = useGetTodaysIntake();
   const { data: currentRewards } = useGetUserRewards();
@@ -21,13 +22,20 @@ export default function QuickAddIntake() {
   
   // Track previous rewards to detect changes
   const previousRewardsRef = useRef<UserRewards | undefined>(currentRewards);
+  const previousIntakeRef = useRef<number | undefined>(todaysIntake);
 
-  // Keep ref in sync with current rewards
+  // Keep refs in sync with current data
   useEffect(() => {
     if (currentRewards) {
       previousRewardsRef.current = currentRewards;
     }
   }, [currentRewards]);
+
+  useEffect(() => {
+    if (todaysIntake !== undefined) {
+      previousIntakeRef.current = todaysIntake;
+    }
+  }, [todaysIntake]);
 
   const cupSize = settings?.cupSize || 250;
 
@@ -38,6 +46,12 @@ export default function QuickAddIntake() {
       });
     }
 
+    // Capture state before mutation
+    const previousRewards = previousRewardsRef.current;
+    const previousIntake = previousIntakeRef.current || 0;
+    const dailyGoal = settings?.dailyGoal || 2000;
+    const wasGoalMet = previousIntake >= dailyGoal;
+
     try {
       await addIntakeMutation.mutateAsync(amount);
 
@@ -46,16 +60,10 @@ export default function QuickAddIntake() {
         return;
       }
 
-      // Wait for queries to refetch and get fresh data
-      await queryClient.refetchQueries({ queryKey: ['userRewards'] });
-      await queryClient.refetchQueries({ queryKey: ['todaysIntake'] });
-
-      // Get fresh rewards from cache after refetch
-      const freshRewards = queryClient.getQueryData<UserRewards>(['userRewards']);
+      // Get fresh intake data from cache (already refetched by mutation onSuccess)
       const freshIntake = queryClient.getQueryData<number>(['todaysIntake']);
-      const previousRewards = previousRewardsRef.current;
 
-      if (!freshRewards || !previousRewards) {
+      if (freshIntake === undefined) {
         toast.success('Intake logged!', {
           description: `Added ${amount}ml to your daily total.`,
         });
@@ -63,49 +71,56 @@ export default function QuickAddIntake() {
       }
 
       // Check for goal completion
-      const dailyGoal = settings?.dailyGoal || 2000;
-      const previousIntake = (todaysIntake || 0);
-      const wasGoalMet = previousIntake >= dailyGoal;
-      const isGoalMetNow = (freshIntake || 0) >= dailyGoal;
+      const isGoalMetNow = freshIntake >= dailyGoal;
 
+      // If goal was just completed, call completeDailyGoal to update rewards
       if (!wasGoalMet && isGoalMetNow) {
-        toast.success('🎉 Daily goal achieved!', {
-          description: 'You\'re crushing it today!',
-          duration: 4000,
-        });
-      }
-
-      // Check for streak changes
-      const previousStreak = Number(previousRewards.streak || 0n);
-      const currentStreak = Number(freshRewards.streak || 0n);
-
-      if (currentStreak > previousStreak) {
-        toast.success(`🔥 ${currentStreak}-day streak!`, {
-          description: 'Keep the momentum going!',
-          duration: 4000,
-        });
-      }
-
-      // Check for new badges
-      const previousBadges = previousRewards.badges || [];
-      const currentBadges = freshRewards.badges || [];
-
-      if (currentBadges.length > previousBadges.length) {
-        const newBadges = currentBadges.filter(
-          badge => !previousBadges.some(prev => prev === badge)
-        );
-
-        newBadges.forEach(badge => {
-          const badgeName = badge.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          toast.success(`🏆 New badge unlocked!`, {
-            description: `You earned the ${badgeName} badge!`,
-            duration: 5000,
+        try {
+          const updatedRewards = await completeDailyGoalMutation.mutateAsync();
+          
+          // Show goal completion toast
+          toast.success('🎉 Daily goal achieved!', {
+            description: 'You\'re crushing it today!',
+            duration: 4000,
           });
-        });
-      }
 
-      // Show basic success if no special events
-      if (wasGoalMet || currentStreak === previousStreak) {
+          // Check for streak changes
+          const previousStreak = Number(previousRewards?.streak || 0n);
+          const currentStreak = Number(updatedRewards.streak || 0n);
+
+          if (currentStreak > previousStreak) {
+            toast.success(`🔥 ${currentStreak}-day streak!`, {
+              description: 'Keep the momentum going!',
+              duration: 4000,
+            });
+          }
+
+          // Check for new badges
+          const previousBadges = previousRewards?.badges || [];
+          const currentBadges = updatedRewards.badges || [];
+
+          if (currentBadges.length > previousBadges.length) {
+            const newBadges = currentBadges.filter(
+              badge => !previousBadges.some(prev => prev === badge)
+            );
+
+            newBadges.forEach(badge => {
+              const badgeName = badge.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+              toast.success(`🏆 New badge unlocked!`, {
+                description: `You earned the ${badgeName} badge!`,
+                duration: 5000,
+              });
+            });
+          }
+        } catch (error) {
+          console.error('Error completing daily goal:', error);
+          // Still show basic success even if rewards update fails
+          toast.success('Intake logged!', {
+            description: `Added ${amount}ml to your daily total.`,
+          });
+        }
+      } else {
+        // Goal was already met or not yet met - just show basic success
         toast.success('Intake logged!', {
           description: `Added ${amount}ml to your daily total.`,
         });
@@ -133,7 +148,7 @@ export default function QuickAddIntake() {
     setCustomAmount('');
   };
 
-  const isLoading = addIntakeMutation.isPending;
+  const isLoading = addIntakeMutation.isPending || completeDailyGoalMutation.isPending;
 
   return (
     <Card className="border-2 shadow-lg">
